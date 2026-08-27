@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>名札作成メニュー モック</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Yuji+Syuku&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#007bff;--success:#28a745;--danger:#dc3545;--warning:#ffc107;--info:#17a2b8;
+ --secondary:#6c757d;--sidebar:#16202b;--sidebar-hover:#1c2836;--sidebar-active:#2563eb;
+ --green:#1aa06d;--body-bg:#f6f4ef;
+ --border:#dee2e6;--muted:#6c757d;--text:#212529}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{background:var(--body-bg);color:var(--text);font-size:14px;line-height:1.6;
+ font-family:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
+ -webkit-font-smoothing:antialiased}
+a{color:var(--primary);text-decoration:none} a:hover{text-decoration:underline}
+
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:250px;background:var(--sidebar);color:#c7cdd6;overflow-y:auto;z-index:30}
+#sidebar .brand{display:flex;align-items:center;justify-content:center;gap:8px;color:#fff;font-size:26px;font-weight:700;padding:20px 0 14px}
+#sidebar .evt{margin:0 16px 14px;background:var(--green);color:#fff;border-radius:8px;text-align:center;padding:11px 0;font-weight:600;font-size:15px}
+#sidebar ul{list-style:none;margin:0;padding:0 0 24px}
+#sidebar li>a{display:flex;align-items:center;gap:12px;padding:11px 20px;font-size:15px;cursor:pointer;color:#c7cdd6;text-decoration:none}
+#sidebar li>a:hover{background:var(--sidebar-hover);color:#fff;text-decoration:none}
+#sidebar li.active>a{background:var(--sidebar-active);color:#fff}
+#sidebar .ico{width:20px;text-align:center;font-size:16px}
+#sidebar .chev{margin-left:auto;opacity:.45;font-size:11px}
+#sidebar .tag{margin-left:auto;font-size:9px;font-weight:700;background:#2563eb;color:#fff;border-radius:10px;padding:1px 7px}
+#header{position:fixed;left:250px;right:0;top:0;height:56px;background:#fff;border-bottom:1px solid var(--border);
+ display:flex;align-items:center;padding:0 22px;gap:14px;z-index:29}
+#header .co{font-weight:600;font-size:15px} #header .spacer{flex:1 1 auto}
+#header .btn-form{background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 16px;
+ font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+#header .role{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
+#header .pchip{font-size:12px;padding:3px 10px;border:1px solid var(--border);border-radius:12px;
+ background:#fff;cursor:pointer;color:var(--text)}
+#header .pchip.on{background:var(--sidebar-active);border-color:var(--sidebar-active);color:#fff}
+#header .user{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+#content-main{margin-left:250px;padding:76px 22px 60px}
+h1.page{font-size:22px;font-weight:700;margin:0 0 18px}
+
+.card{background:#fff;border:1px solid var(--border);border-radius:3px;margin-bottom:18px}
+.card-header{padding:11px 15px;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;align-items:center;gap:10px}
+.card-header .spacer,.card-footer .spacer,.toolbar .spacer{flex:1 1 auto}
+.card-body{padding:15px} .card-footer{padding:11px 15px;border-top:1px solid var(--border);background:#fbfbfb;display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:13.5px;padding:6px 13px;
+ border:1px solid transparent;border-radius:3px;cursor:pointer;line-height:1.5;background:#fff;transition:.12s}
+.btn:focus-visible{outline:2px solid #80bdff;outline-offset:1px}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}.btn-primary:hover{background:#0069d9}
+.btn-success{background:var(--success);border-color:var(--success);color:#fff}.btn-success:hover{background:#218838}
+.btn-secondary{background:var(--secondary);border-color:var(--secondary);color:#fff}
+.btn-outline{background:#fff;border-color:var(--border);color:var(--text)}.btn-outline:hover{background:#f1f3f5}
+.btn-outline-primary{background:#fff;border-color:var(--primary);color:var(--primary)}
+.btn-outline-primary:hover{background:var(--primary);color:#fff}
+.btn-sm{font-size:12.5px;padding:3px 9px} .btn:disabled{opacity:.5;cursor:not-allowed}
+.form-group{margin-bottom:14px} .form-group>label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+.form-control,.custom-select{width:100%;font-family:inherit;font-size:13.5px;padding:6px 10px;border:1px solid #ced4da;border-radius:3px;background:#fff;color:var(--text)}
+.form-control:focus,.custom-select:focus{outline:none;border-color:#80bdff;box-shadow:0 0 0 2px rgba(0,123,255,.18)}
+.form-row{display:flex;gap:12px;flex-wrap:wrap}.form-row>*{flex:1 1 160px;min-width:0}
+.help{font-size:12px;color:var(--muted);margin-top:3px}
+table.table{width:100%;border-collapse:collapse;font-size:13.5px;background:#fff}
+table.table th,table.table td{padding:8px 10px;border:1px solid var(--border);vertical-align:middle}
+table.table thead th{background:#f8f9fa;font-weight:600;white-space:nowrap;font-size:13px}
+table.table tbody tr:hover{background:#f8fbff} table.table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.sortable{cursor:pointer;user-select:none}.sortable::after{content:" ⇅";color:#adb5bd;font-size:11px}
+.badge{display:inline-block;font-size:11.5px;padding:2px 7px;border-radius:3px;font-weight:600;white-space:nowrap}
+.b-primary{background:#cfe2ff;color:#084298}.b-success{background:#d4edda;color:#155724}
+.b-secondary{background:#e2e3e5;color:#41464b}.b-warning{background:#fff3cd;color:#856404}
+.b-info{background:#d1ecf1;color:#0c5460}
+.alert{padding:10px 14px;border-radius:3px;font-size:13.5px;margin-bottom:14px}
+.alert-info{background:#d1ecf1;border:1px solid #bee5eb;color:#0c5460}
+.alert-warn{background:#fff3cd;border:1px solid #ffeeba;color:#856404}
+.empty{padding:44px 20px;text-align:center;color:var(--muted);font-size:13.5px}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.muted{color:var(--muted)}.small{font-size:12.5px}.nowrap{white-space:nowrap}
+.tiles{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.tile{flex:1 1 170px;background:#fff;border:1px solid var(--border);border-radius:3px;padding:14px 16px}
+.tile .k{font-size:12px;color:var(--muted)}
+.tile .v{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+.tile .v small{font-size:13px;font-weight:400;color:var(--muted);margin-left:3px}
+.tile.accent{border-left:3px solid var(--primary)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.tabs button{font-family:inherit;font-size:13.5px;padding:8px 16px;border:1px solid transparent;border-bottom:none;
+ background:none;cursor:pointer;color:var(--primary);border-radius:3px 3px 0 0}
+.tabs button:hover{background:#eef1f4}
+.tabs button.on{background:#fff;border-color:var(--border);color:var(--text);font-weight:600;margin-bottom:-1px;border-bottom:1px solid #fff}
+.stepper{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap}
+.stepper .st{flex:1 1 130px;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:3px;
+ font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px}
+.stepper .st .n{width:20px;height:20px;border-radius:50%;background:#e9ecef;color:var(--muted);
+ display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;flex:0 0 auto}
+.stepper .st.on{border-color:var(--primary);color:var(--text);font-weight:600}
+.stepper .st.on .n{background:var(--primary);color:#fff}
+.stepper .st.done .n{background:var(--success);color:#fff}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.pcard{border:1px solid var(--border);border-radius:3px;background:#fff;overflow:hidden;display:flex;flex-direction:column}
+.pcard .thumb{height:92px;background:linear-gradient(135deg,#eef1f4,#e2e6ea);display:flex;align-items:center;justify-content:center;color:#adb5bd;font-size:12px}
+.pcard .pb{padding:9px 11px;flex:1 1 auto;display:flex;flex-direction:column;gap:4px}
+.pcard .nm{font-size:13.5px;font-weight:600;line-height:1.4}
+.pcard .pr{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pcard .act{padding:0 11px 11px;display:flex;align-items:center;gap:6px}
+.qty{width:58px;text-align:center;font-family:inherit;font-size:13px;padding:4px 6px;border:1px solid #ced4da;border-radius:3px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.pill{font-family:inherit;font-size:12.5px;padding:4px 12px;border:1px solid var(--border);background:#fff;border-radius:14px;cursor:pointer}
+.pill.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.split{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.split .l{flex:1 1 420px;min-width:320px} .split .r{flex:0 0 300px;position:sticky;top:76px}
+@media(max-width:940px){.split .r{position:static;flex:1 1 100%}}
+
+/* ===== 名札（注文管理モックから移植） ===== */
+.fuda{background:#EDE2CE;border:1px solid #C9B896;display:flex;flex-direction:column;align-items:center;
+ font-family:"Yuji Syuku","Yu Mincho","Hiragino Mincho ProN","Noto Serif JP",serif;flex-shrink:0;position:relative;
+ background-image:repeating-linear-gradient(90deg,rgba(160,130,90,.10) 0 1px,rgba(160,130,90,0) 1px 5px,
+ rgba(160,130,90,.05) 5px 6px,rgba(160,130,90,0) 6px 13px);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.fuda-hd{display:flex;color:#1a1a1a}
+.fuda-body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;flex:1;color:#1a1a1a}
+.fuda-row{display:flex;flex-direction:row-reverse;align-items:flex-start;justify-content:center}
+.fuda-col{display:flex;flex-direction:column;align-items:center}
+.fuda-col.bump{outline:1.5px solid var(--danger);outline-offset:2px}
+.fuda-area{position:absolute;outline:1px dashed rgba(0,123,255,.4);pointer-events:none}
+.fuda-ft{position:absolute;left:0;width:100%;text-align:center;color:#6b5b45}
+
+.lblock{border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:3px;margin-bottom:10px;background:#fff}
+.lblock .lh{padding:9px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;font-weight:600;font-size:13.5px}
+.subbox{border:1px solid #eef0f3;border-radius:3px;padding:9px;margin-bottom:9px;background:#fcfcfd}
+.subbox .cap{font-size:11px;color:var(--muted);margin-bottom:5px}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
+.chip{font-family:inherit;font-size:12px;padding:2px 9px;border:1px solid var(--border);background:#f8f9fa;border-radius:12px;cursor:pointer}
+.chip:hover{background:#e9ecef} .chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.cbline{font-size:12.5px;display:flex;gap:6px;align-items:center;margin-bottom:7px;cursor:pointer}
+.fld{margin-bottom:7px} .fld>label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:3px}
+.pvline{background:#f8f9fa;border:1px solid var(--border);border-radius:3px;padding:7px 10px;font-size:12.5px;margin-top:6px}
+
+.tune{border:1px solid var(--border);border-radius:3px;background:#fff;margin-top:12px}
+.tune .th{padding:9px 13px;border-bottom:1px solid var(--border);font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:9px}
+.tune .tb{padding:12px 13px}
+.slrow{margin-bottom:11px}
+.slh{display:flex;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:2px}
+.slh .kk{font-size:11px;background:#e9ecef;color:var(--muted);padding:1px 6px;border-radius:2px;flex:0 0 auto}
+.slh .lab{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slh .mm{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px;flex:0 0 auto}
+.slh .val{background:#cfe2ff;color:#084298;padding:1px 7px;border-radius:2px;font-size:12px;min-width:32px;
+ text-align:center;font-variant-numeric:tabular-nums;flex:0 0 auto}
+.slh .val.z{background:#e9ecef;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--primary);margin:0}
+.flist{border:1px solid var(--border);border-radius:3px}
+.frow{display:flex;align-items:center;gap:11px;padding:10px 13px;border-bottom:1px solid var(--border);font-size:13.5px}
+.frow:last-child{border-bottom:none}
+.frow .fn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frow .mono{font-family:monospace;font-size:12.5px}
+.drop{border:2px dashed #ced4da;border-radius:4px;padding:30px 20px;text-align:center;background:#fafbfc;color:var(--muted);font-size:13.5px}
+.bar{height:7px;background:#e9ecef;border-radius:4px;overflow:hidden;display:flex}.bar i{display:block;height:100%}
+
+/* ===== 外字検索モーダル ===== */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+#modal.on{display:flex}
+.mbox{background:#fff;border-radius:4px;width:100%;max-width:760px;box-shadow:0 6px 30px rgba(0,0,0,.3)}
+.mhead{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-weight:600}
+.mbody{padding:16px} .mfoot{padding:12px 16px;border-top:1px solid var(--border);background:#fbfbfb;display:flex;gap:8px;align-items:center}
+.gsteps{display:flex;gap:4px;margin-bottom:16px}
+.gsteps div{flex:1;padding:6px 9px;border:1px solid var(--border);border-radius:3px;font-size:12px;color:var(--muted);text-align:center}
+.gsteps div.on{border-color:var(--primary);color:var(--text);font-weight:600;background:#f0f7ff}
+.parents{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.pbtn{font-family:"游明朝","Yu Mincho",serif;font-size:24px;width:52px;height:52px;border:1px solid var(--border);
+ background:#fff;border-radius:3px;cursor:pointer;line-height:1}
+.pbtn:hover{border-color:var(--primary);background:#f0f7ff}
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.gcard{border:1px solid var(--border);border-radius:3px;background:#fff;cursor:pointer;overflow:hidden;text-align:center}
+.gcard:hover{border-color:var(--primary)} .gcard.on{border-color:var(--primary);box-shadow:0 0 0 2px rgba(0,123,255,.25)}
+.gcard .gg{font-family:"游明朝","Yu Mincho","Hiragino Mincho ProN",serif;font-size:52px;line-height:1;
+ padding:16px 0 10px;color:#1a1a1a;background:#fcfbf8}
+.gcard .ph{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;margin:14px 0 8px;
+ border:1px dashed #adb5bd;border-radius:3px;color:#adb5bd;font-size:10px;font-family:monospace}
+.gcard .gm{font-family:monospace;font-size:11px;color:var(--muted);padding:0 6px 4px}
+.gcard .gs{padding:0 6px 9px}
+.gcard .gn{font-size:11px;color:var(--muted);padding:0 6px 8px;line-height:1.4}
+.cmp{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.cmp .box{border:1px solid var(--border);border-radius:3px;padding:12px 16px;text-align:center;min-width:120px}
+.cmp .box .lb{font-size:11px;color:var(--muted);margin-bottom:5px}
+.cmp .box .g{font-size:46px;line-height:1;font-family:"游明朝","Yu Mincho",serif}
+.cmp .box .g.kai{font-family:"Yuji Syuku","游明朝",serif}
+.cmp .arw{color:var(--muted);font-size:20px}
+</style>
+
+<div id="sidebar">
+  <div class="brand"><i class="fas fa-cloud"></i> itowa</div>
+  <div class="evt"><i class="fas fa-exchange-alt me-1"></i> イベント管理</div>
+  <ul id="menu"></ul>
+</div>
+
+<div id="header">
+  <span class="co">いとわ葬祭様 管理画面</span>
+  <span class="spacer"></span>
+  <button class="btn-form" onclick="alert('注文フォーム：故人名の検索ページへ遷移します。')">注文フォーム</button>
+  <span class="role"><i class="fas fa-toggle-on"></i> 機能権限
+    <span id="permBar" style="display:flex;gap:5px"></span></span>
+  <span class="user"><i class="fas fa-user-circle"></i> <span id="hdUser">管理者</span></span>
+</div>
+
+<div id="content-main">
+  <div style="font-size:11.5px;color:#8a8f97;margin:-8px 0 12px">モック — 入力内容は保存されません</div>
+  <div id="content"></div></div>
+
+<div id="modal"><div class="mbox" id="mbox"></div></div>
+
+<script>
+/* ============ マスタ ============ */
+/* 上限サイズは名札フォーマットごと・フィールドごとに持つ（mm）。
+   F1 は 2026-08-25 に比較ツールで確定した値。F2/F3 は F1 からの縦横比按分（仮）。 */
+const FORMATS={
+ F1:{id:'F1',name:'供花札 大',hd:'御供',call:'50×20',W:195,H:495,top:38,bottom:26,side:18,
+     maxNames:8,maxCorps:3,ft:'サンプル葬祭',
+     cap:{na:70,co:34,ti:26,cn:62,rel:14,hd:27}, lh:1.15, sx:1.00, valign:'top'},
+ F2:{id:'F2',name:'供花札 中',hd:'御供',call:'45×15',W:150,H:445,top:34,bottom:22,side:15,
+     maxNames:6,maxCorps:2,ft:'サンプル葬祭',
+     cap:{na:63,co:31,ti:23,cn:56,rel:13,hd:24}, lh:1.15, sx:1.00, valign:'top'},
+ F3:{id:'F3',name:'供物札',  hd:'御供物',call:'39×13',W:130,H:385,top:30,bottom:20,side:13,
+     maxNames:6,maxCorps:2,ft:'',
+     cap:{na:54,co:26,ti:20,cn:48,rel:11,hd:21}, lh:1.15, sx:1.00, valign:'top'},
+};
+/* 出荷時の既定値。設定画面から戻せるように控えておく */
+const FORMAT_DEFAULTS=JSON.parse(JSON.stringify(FORMATS));
+
+const ITEMS=[
+ {id:'I1',name:'供花 スタンド一段',cat:'供花・供物',price:16500,fmt:'F1'},
+ {id:'I2',name:'供花 スタンド二段',cat:'供花・供物',price:27500,fmt:'F1'},
+ {id:'I3',name:'籠花 大',cat:'供花・供物',price:13200,fmt:'F2'},
+ {id:'I4',name:'籠花 小',cat:'供花・供物',price:8800,fmt:'F2'},
+ {id:'I5',name:'果物籠',cat:'供花・供物',price:11000,fmt:'F3'},
+ {id:'I6',name:'線香セット',cat:'供花・供物',price:5500,fmt:'F3'},
+ {id:'I7',name:'弔電',cat:'弔電',price:2200,fmt:null},
+];
+/* --- 注文管理モックから移植した定数 --- */
+const CORP_TYPES=['株式会社','有限会社','合資会社','合名会社','（記載なし）'];
+const QUICK=['子供一同','孫一同','親族一同','兄弟一同','姉妹一同','友人一同','家一同'];
+const CORP_QUICK=['有志一同','社員一同','部一同','一同'];
+const TITLE_QUICK=['代表取締役社長','代表取締役','会長','社長','専務取締役','常務取締役','取締役','執行役員','代表'];
+/* カウント対象外の定型語（R4で確定） */
+const EXCLUDE=['子供一同','孫一同','親族一同','兄弟一同','姉妹一同','友人一同'];
+const GAIJI=['髙','﨑','栁','德','濵','邉','邊','齋','𠮷'];
+
+/* 親字 → 子（異体字）の一覧。MJ縮退マップの逆引きで機械生成できる想定。
+   in:1 = 楷書MCBK1（Adobe-Japan1-3）に収録済み → 生成不要
+   in:0 = 未収録 → IPAmjの字形を参照してAIが楷書で生成
+   ph:1 = このモックでは字形を表示できないもの（実画面ではIPAmjの字形画像が入る） */
+const GAIJI_TREE={
+ '高':[{c:'高',mj:'MJ028903',in:1,n:'標準字体'},
+      {c:'髙',mj:'MJ028927',in:1,n:'はしごだか'},
+      {c:'',mj:'MJ028931',in:0,ph:1,n:'口の下が長い形'}],
+ '崎':[{c:'崎',mj:'MJ008967',in:1,n:'標準字体'},
+      {c:'﨑',mj:'MJ008969',in:1,n:'たつさき'},
+      {c:'嵜',mj:'MJ008971',in:1,n:'山が上'},
+      {c:'',mj:'MJ008973',in:0,ph:1,n:'大が立の形'}],
+ '辺':[{c:'辺',mj:'MJ025760',in:1,n:'標準字体'},
+      {c:'邊',mj:'MJ039469',in:1,n:'旧字'},
+      {c:'邉',mj:'MJ039472',in:1,n:'旧字（異体）'},
+      {c:'',mj:'MJ039475',in:0,ph:1,n:'鼻の下が方'},
+      {c:'',mj:'MJ039481',in:0,ph:1,n:'自の下が刀'},
+      {c:'',mj:'MJ039488',in:0,ph:1,n:'点の有無違い'}],
+ '柳':[{c:'柳',mj:'MJ014806',in:1,n:'標準字体'},
+      {c:'栁',mj:'MJ014809',in:1,n:'卯が異体'},
+      {c:'桺',mj:'MJ014811',in:0,n:'木へん異体'}],
+ '徳':[{c:'徳',mj:'MJ011176',in:1,n:'標準字体'},
+      {c:'德',mj:'MJ011179',in:1,n:'旧字（心の上に一）'}],
+ '浜':[{c:'浜',mj:'MJ016885',in:1,n:'標準字体'},
+      {c:'濱',mj:'MJ016889',in:1,n:'旧字'},
+      {c:'濵',mj:'MJ016891',in:1,n:'旧字（異体）'}],
+ '斉':[{c:'斉',mj:'MJ010045',in:1,n:'標準字体'},
+      {c:'齊',mj:'MJ061105',in:1,n:'旧字'},
+      {c:'齋',mj:'MJ061107',in:1,n:'いつきのさい'},
+      {c:'斎',mj:'MJ010047',in:1,n:'常用字体'}],
+ '吉':[{c:'吉',mj:'MJ006177',in:1,n:'標準字体'},
+      {c:'𠮷',mj:'MJ006180',in:0,n:'つちよし'}],
+};
+const PARENT_SAMPLES=Object.keys(GAIJI_TREE);
+
+
+const FUNERALS=[
+ {id:'f1',name:'佐藤家',tsuya:'8/25 18:00',sogi:'8/26 11:00',hall:'第一斎場',moshu:'佐藤 健一'},
+ {id:'f2',name:'鈴木家',tsuya:'8/25 19:00',sogi:'8/26 13:00',hall:'第二斎場',moshu:'鈴木 美和'},
+ {id:'f3',name:'高橋家',tsuya:'8/26 18:00',sogi:'8/27 10:00',hall:'第一斎場',moshu:'高橋 隆'},
+ {id:'f4',name:'田中家',tsuya:'8/26 18:30',sogi:'8/27 11:30',hall:'第三斎場',moshu:'田中 恵子'},
+ {id:'f5',name:'渡辺家',tsuya:'8/27 18:00',sogi:'8/28 12:00',hall:'第二斎場',moshu:'渡辺 剛'},
+];
+
+/* ============ 名札モデル（移植） ============ */
+let LID=0;
+function emptyLabel(){return{kind:'individual',withRelation:false,
+ names:[{relation:'',name:'',isCouple:false}],
+ corps:[{type:'株式会社',company:'',title:'代表取締役',name:''}],note:''};}
+const mkLabel=o=>Object.assign({id:'L'+(++LID),funeralId:null,formatId:'F1',itemName:'',
+ status:'draft',src:'manual',adj:{}}, emptyLabel(), o);
+
+let LABELS=[
+ mkLabel({funeralId:'f1',formatId:'F1',itemName:'供花 スタンド一段',kind:'corporate',status:'fixed',src:'web',
+   corps:[{type:'株式会社',company:'サンプル商事',title:'代表取締役',name:'青木 一郎'}]}),
+ mkLabel({funeralId:'f1',formatId:'F1',itemName:'供花 スタンド一段',status:'fixed',src:'web',
+   names:[{relation:'',name:'佐藤 一郎',isCouple:false},{relation:'',name:'佐藤 花子',isCouple:false}]}),
+ mkLabel({funeralId:'f1',formatId:'F2',itemName:'籠花 大',status:'fixed',src:'order',
+   names:[{relation:'',name:'子供一同',isCouple:false}]}),
+ mkLabel({funeralId:'f1',formatId:'F3',itemName:'果物籠',kind:'corporate',status:'draft',src:'manual',
+   corps:[{type:'株式会社',company:'みどり建設',title:'取締役',name:'緑川 修'}]}),
+ mkLabel({funeralId:'f2',formatId:'F1',itemName:'供花 スタンド二段',status:'fixed',src:'web',
+   names:[{relation:'',name:'鈴木 太郎',isCouple:false}]}),
+ mkLabel({funeralId:'f3',formatId:'F1',itemName:'供花 スタンド一段',status:'fixed',src:'order',
+   names:[{relation:'',name:'孫一同',isCouple:false}]}),
+];
+
+/* ============ 共通 ============ */
+const $=s=>document.querySelector(s);
+const esc=x=>String(x??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fn=id=>FUNERALS.find(f=>f.id===id);
+const fmt=id=>FORMATS[id];
+const yen=n=>'¥'+n.toLocaleString();
+const isVendor=()=>S.role==='vendor';
+const clen=x=>Array.from(x||'').length;
+
+/* --- 移植：姓の分割 --- */
+function splitSurname(nm){const g=Array.from(nm);const i=g.findIndex(c=>c===' '||c==='　');
+ if(i>0)return[i,g.slice(0,i).join(''),g.slice(i+1).join('')];return[0,'',nm];}
+
+function labelFilled(l){return l.kind==='individual'
+ ? l.names.some(n=>n.name.trim())
+ : l.corps.some(c=>c.company.trim()||c.name.trim());}
+
+function composeLabel(l){
+ if(l.kind==='individual'){const p=[];l.names.forEach(n=>{if(n.name.trim())
+   p.push((l.withRelation&&n.relation.trim()?n.relation.trim()+' ':'')+n.name.trim());});return p.join('／');}
+ const p=[];l.corps.forEach(c=>{const t=c.type==='（記載なし）'?'':c.type;
+  const s=[t+c.company.trim(),c.title.trim(),c.name.trim()].filter(Boolean).join(' ');if(s.trim())p.push(s);});
+ return p.join('／');}
+
+function labelTexts(l){
+ if(l.kind==='individual')return l.names.map(n=>n.name.trim()).filter(Boolean);
+ return l.corps.flatMap(c=>[c.company.trim(),c.name.trim()]).filter(Boolean);}
+const isExcluded=l=>{const t=labelTexts(l);return t.length>0&&t.every(x=>EXCLUDE.includes(x));};
+const countable=l=>l.status==='fixed'&&labelFilled(l)&&!isExcluded(l);
+const SRC={web:['Web注文','b-primary'],order:['注文管理','b-info'],manual:['手動','b-secondary'],csv:['一括取込','b-warning']};
+
+/* ============ 名札レンダリング（注文管理モックから移植 ＋ 行ごと微調整） ============ */
+const LH=1.15;                 /* 既定。実際は各フォーマットの lh を使う */
+const GIN=.16, GOUT=.46;       /* 列間（同じ差出人の中／連名どうし） */
+const chars=t=>(t||'').replace(/\s/g,'').length;
+/* 高さの計算用。空白は半分の高さを取るので 0.5 と数える（描画側と合わせる） */
+const ulen=t=>[...(t||'')].reduce((a,c)=>a+(/\s/.test(c)?0.5:1),0);
+const W=(l,k)=>1+0.05*(l.adj[k]||0);   /* 行ごとの相対比率 */
+
+function buildSpecs(l){
+ const C=fmt(l.formatId).cap;
+ const specs=[];
+ if(l.kind==='individual'){
+  const es=[];
+  l.names.forEach((n,i)=>{const nm=(n.name||'').trim();if(!nm)return;
+   const r=n.isCouple?[0,'',nm]:splitSurname(nm);
+   es.push({i,relation:l.withRelation?(n.relation||'').trim():'',slen:r[0],sur:r[1],giv:r[2]});});
+  const ws=es.filter(e=>e.slen>0);
+  const maxlen=ws.length?Math.max(...ws.map(e=>e.slen)):0;
+  es.forEach(e=>{
+   let head=e.sur,tail=e.giv,gap=0;
+   if(e.slen>0)gap=0.5+(maxlen-e.slen);
+   else if(maxlen>0){head='';gap=maxlen+0.5;}
+   /* 比率は「氏名の上限」を1としたときの相対値。上限どうしの比がそのまま初期比率になる。 */
+   const rn=1*W(l,'n'+e.i), rr=(C.rel/C.na)*W(l,'r'+e.i);
+   const relu=l.withRelation?(e.relation?ulen(e.relation)*rr+0.3:rr+0.3):0;
+   specs.push({t:'name',key:'n'+e.i,relation:e.relation,rr,head,gap,tail,rn,
+     cap:C.na, capRel:C.rel,
+     units:relu+(ulen(head)+gap+ulen(tail))*rn});
+  });
+ }else{
+  l.corps.forEach((c,ci)=>{
+   const type=c.type==='（記載なし）'?'':c.type;
+   const org=(type+(c.company||'')).trim(), title=(c.title||'').trim(), name=(c.name||'').trim();
+   if(!org&&!name)return;
+   const ro=(C.co/C.cn)*W(l,'o'+ci), rt=(C.ti/C.cn)*W(l,'t'+ci), rn=1*W(l,'c'+ci);
+   if(org)specs.push({t:'org',key:'o'+ci,text:org,ro,cap:C.co,units:ulen(org)*ro});
+   if(name||title)specs.push({t:'cname',key:'c'+ci,tkey:'t'+ci,title,name,rt,rn,
+     cap:C.cn,capTi:C.ti,units:(title?ulen(title)*rt+0.3:0)+ulen(name)*rn});
+  });
+ }
+ return specs;
+}
+
+function fudaGeom(l){
+ const M=fmt(l.formatId), C=M.cap, LHx=M.lh, SX=M.sx;
+ const hdH=C.hd*chars(M.hd)*1.12;
+ const bodyTop=M.top+hdH+M.H*0.025;
+ /* 下部の表記がある場合は、その帯を本文領域から除く */
+ const ftBand=M.ft?M.H*0.022*1.45:0;
+ const bodyH=M.H-bodyTop-M.bottom-ftBand;
+ const innerW=M.W-M.side*2;
+ const specs=buildSpecs(l);
+ let rows;
+ if(!specs.length)rows=[];
+ else if(l.kind==='individual'&&specs.length>4){const t=Math.ceil(specs.length/2);rows=[specs.slice(0,t),specs.slice(t)];}
+ else rows=[specs];
+ const numRows=Math.max(1,rows.length);
+ const maxUnits=Math.max(1,...specs.map(s=>s.units));
+ const maxCols=Math.max(1,...rows.map(r=>r.length));
+ const fitH=bodyH*0.94/(numRows*maxUnits*LHx);
+ const fitW=innerW/(maxCols*1.35*SX);
+ /* 行ごとの上限。ある行が上限に達したら全体をそこで止める。 */
+ const capK=Math.min(...specs.map(s=>{
+   const w = s.t==='org'?s.ro : s.rn;
+   return s.cap/(w||1);
+ }),Infinity);
+ const NF=Math.max(3,Math.min(fitH,fitW,capK||99));
+ const usedH=numRows*maxUnits*NF*LHx+M.H*0.03*(numRows-1);
+ const slack=Math.max(0,bodyH-usedH);
+ const offset=M.valign==='middle'?slack/2:(M.valign==='optical'?slack*0.38:0);
+ return{M,hdMM:C.hd,bodyTop,bodyH,innerW,specs,rows,NF,LH:LHx,SX,usedH,slack,offset,ftBand};
+}
+
+function fudaHtml(l,pxH,showArea,bump,opts){
+ opts=opts||{};
+ const g=fudaGeom(l),M=g.M;
+ const MM=opts.unit==='mm';
+ const SC=MM?1:pxH/M.H, NF=g.NF*SC, LHx=g.LH, SX=g.SX;
+ const U=v=>(v*SC).toFixed(2)+(MM?'mm':'px');
+ const PW=MM?M.W+'mm':(M.W*SC)+'px', PH=MM?M.H+'mm':pxH+'px';
+ const plain=opts.plain
+   ?'background:#fff;background-image:none;border:none;box-shadow:none;'
+   :'';
+ const area=(showArea&&!opts.plain)?`<div class="fuda-area" style="left:${U(M.side)};top:${U(M.top)};
+   width:${U(M.W-M.side*2)};height:${U(M.H-M.top-M.bottom)}"></div>`:'';
+ const ft=M.ft?`<div class="fuda-ft" style="bottom:${U(M.bottom+M.H*0.004)};font-size:${U(M.H*0.022)}">${esc(M.ft)}</div>`:'';
+ const head=`<div class="fuda-hd" style="margin-top:${U(M.top)};font-size:${U(g.hdMM)};
+   writing-mode:vertical-rl;text-orientation:upright;line-height:1.12">${esc(M.hd)}</div>`;
+ const shell=inner=>`<div class="fuda" style="${plain}width:${PW};height:${PH}">${area}${head}
+   <div class="fuda-body" style="margin-top:${U(M.H*0.025+g.offset)};gap:${U(M.H*0.03)}">${inner}</div>${ft}</div>`;
+ if(!g.specs.length)return shell(`<div class="fuda-row"><div class="fuda-col"
+   style="color:#a99b84;font-size:${U(M.W*0.07)};font-family:inherit">名義未入力</div></div>`);
+
+ const gl=(t,size)=>Array.from(t||'').map(ch=>(ch===' '||ch==='　')
+   ?`<span style="display:block;height:${U(size*0.5/SC)}"></span>`
+   :`<span style="display:block;font-size:${U(size/SC)};line-height:${LHx};transform:scaleX(${SX})">${esc(ch)}</span>`).join('');
+ const sp=v=>v>0?`<span style="display:block;height:${U(v/SC)}"></span>`:'';
+
+ const col=s=>{
+  const on=bump&&bump.has(s.key)?' bump':'';
+  if(s.t==='org')return `<div class="fuda-col${on}">${gl(s.text,NF*s.ro)}</div>`;
+  if(s.t==='cname'){let inner='';
+   if(s.title)inner+=gl(s.title,NF*s.rt)+sp(NF*0.3);
+   inner+=gl(s.name,NF*s.rn);
+   const on2=bump&&(bump.has(s.key)||bump.has(s.tkey))?' bump':'';
+   return `<div class="fuda-col${on2}">${inner}</div>`;}
+  let inner='';
+  if(l.kind==='individual'&&l.withRelation)
+   inner+=s.relation?gl(s.relation,NF*s.rr)+sp(NF*0.3):sp(NF*s.rr*LHx+NF*0.3);
+  if(s.head)inner+=gl(s.head,NF*s.rn);
+  if(s.gapU>0)inner+=sp(s.gapU*NF*s.rn*LHx);
+  inner+=gl(s.tail,NF*s.rn);
+  return `<div class="fuda-col${on}">${inner}</div>`;
+ };
+ return shell(g.rows.map(r=>`<div class="fuda-row" style="gap:${U(M.W*0.06)}">${r.map(col).join('')}</div>`).join(''));
+}
+
+/* 印字領域に収まっているか（PoC の fit_report と同じ計算） */
+function fitCheck(l){
+ const g=fudaGeom(l),M=g.M;
+ const end=g.bodyTop+g.offset+g.usedH, lim=M.H-M.bottom-g.ftBand;
+ return {end,lim,ok:end<=lim+0.01,nf:g.NF,use:g.usedH/g.bodyH,slack:g.slack};
+}
+
+/* ============ 状態 ============ */
+const S={screen:'s1',role:'manager',funeralId:null,cart:[],editId:null,standalone:null,
+ csvStep:1,csvRows:[],csvEditId:0,tuneOpen:false,cat:'すべて',sel:new Set(),mfid:'F1'};
+
+/* ============ メニュー ============ */
+const OM='index.html';   /* 注文管理モック */
+const MENU=[
+ {t:'ホーム',           icon:'fa-house-chimney', href:OM,             staff:1},
+ {t:'葬家管理',         icon:'fa-users',         href:OM+'#funerals', staff:1},
+ {t:'注文管理',         icon:'fa-phone',         href:OM+'#list',     staff:1},
+ {t:'利用状況',         icon:'fa-chart-column',  staff:1, vendor:1, screens:['s9']},
+ {t:'名札作成',         icon:'fa-tag',           staff:1, vendor:1, tag:'NEW',
+   screens:['s1','s2','s3','s4','s6','s7','s8']},
+ {t:'配信機能',         icon:'fa-satellite-dish',href:OM+'#haishin',  staff:1, tag:'NEW', tagbg:'#46a45f'},
+ {t:'業者管理',         icon:'fa-store-alt'},
+ {t:'商品管理',         icon:'fa-gifts'},
+ {t:'返礼品管理',       icon:'fa-gift',          chev:1},
+ {t:'スケジュール管理', icon:'fa-calendar-plus', staff:1, chev:1},
+ {t:'担当者別葬儀履歴', icon:'fa-list-alt',      staff:1},
+ {t:'月別累計売上高',   icon:'fa-list-alt',      staff:1},
+ {t:'操作ログ',         icon:'fa-clock'},
+ {t:'設定',             icon:'fa-cogs',          chev:1},
+];
+const ROLES=[['manager','管理者'],['staff','担当者'],['vendor','業者名札作成']];
+
+function renderMenu(){
+ const cur=MENU.find(m=>m.screens&&m.screens.includes(S.screen));
+ $('#menu').innerHTML=MENU.filter(m=>isVendor()?m.vendor:(S.role==='staff'?m.staff:true)).map(m=>{
+  const on=cur&&cur.t===m.t;
+  const tag=m.tag?`<span class="tag" ${m.tagbg?`style="background:${m.tagbg}"`:''}>${m.tag}</span>`:'';
+  const chev=m.chev?'<i class="fas fa-chevron-left chev"></i>':'';
+  if(m.href) return `<li><a href="${m.href}"><span class="ico"><i class="fas ${m.icon}"></i></span>${esc(m.t)}${tag}${chev}</a></li>`;
+  if(m.screens) return `<li class="${on?'active':''}"><a href="#" onclick="go('${m.screens[0]}');return false">`
+    +`<span class="ico"><i class="fas ${m.icon}"></i></span>${esc(m.t)}${tag}${chev}</a></li>`;
+  return `<li><a href="#" onclick="return false"><span class="ico"><i class="fas ${m.icon}"></i></span>${esc(m.t)}${tag}${chev}</a></li>`;
+ }).join('');
+ $('#permBar').innerHTML=ROLES.map(([v,t])=>
+  `<span class="pchip ${S.role===v?'on':''}" onclick="setRole('${v}')">${t}</span>`).join('');
+ $('#hdUser').textContent=isVendor()?'取引業者':(S.role==='staff'?'担当者':'管理者');
+}
+function setRole(v){
+ S.role=v;
+ if(isVendor()&&!['s1','s2','s3','s4','s6','s7','s8','s9'].includes(S.screen))S.screen='s1';
+ render();
+}
+function go(s,o){if(o)Object.assign(S,o);S.screen=s;S.tuneOpen=false;render();window.scrollTo(0,0);}
+function render(){renderMenu();$('#content').innerHTML=SCREENS[S.screen]();}
+/* 注文管理から渡された葬家を受け取る。#f=... が付いていればその葬家を開く */
+function omLink(fid){
+ const f=fn(fid);
+ if(f&&f.omId) return OM+'#orders='+f.omId.replace('om','');
+ return OM+'#list';
+}
+(function(){
+ const h=location.hash||'';
+ if(h.startsWith('#f=')){
+  const q=new URLSearchParams(decodeURIComponent(h.slice(3)));
+  const id=q.get('id')||('om'+Date.now());
+  let f=FUNERALS.find(x=>x.id===id);
+  if(!f){ f={id,name:q.get('name')||'（葬家）',tsuya:q.get('tsuya')||'',sogi:q.get('sogi')||'',
+             hall:q.get('hall')||'',moshu:q.get('moshu')||'',omId:id};
+          FUNERALS.unshift(f); }
+  else { f.omId=id; }
+  S.funeralId=f.id; S.screen='s2';
+ } else if(h==='#usage'){ S.screen='s9'; }
+})();
+
+const progress=fid=>{const ls=LABELS.filter(l=>l.funeralId===fid);
+ return{all:ls.length,fixed:ls.filter(l=>l.status==='fixed').length};};
+
+/* ============ 画面 ============ */
+const SCREENS={
+
+s1(){
+ const rows=FUNERALS.map(f=>{const p=progress(f.id);return `<tr>
+  <td><a href="#" onclick="go('s2',{funeralId:'${f.id}'});return false"><b>${esc(f.name)}</b></a>
+   ${f.omId?' <span class="badge b-info">注文管理から</span>':''}</td>
+  ${isVendor()?'':`<td>${esc(f.moshu)}</td>`}
+  <td class="nowrap">${esc(f.tsuya)}</td><td class="nowrap">${esc(f.sogi)}</td><td>${esc(f.hall)}</td>
+  <td class="num">${p.fixed} / ${p.all}</td>
+  <td class="nowrap">
+   <a class="btn btn-outline btn-sm" href="${omLink(f.id)}"><i class="fas fa-phone"></i> 注文管理</a>
+   <button class="btn btn-outline-primary btn-sm" onclick="go('s2',{funeralId:'${f.id}'})">名札を作る</button></td>
+ </tr>`;}).join('');
+ return `<h1 class="page">名札作成</h1>
+ ${isVendor()?'<div class="alert alert-info">業者名札作成の権限でログインしています。名札に必要な情報だけが表示されます。</div>':''}
+ <div class="card">
+  <div class="card-header">葬家を選ぶ<span class="spacer"></span>
+   <button class="btn btn-outline btn-sm" onclick="go('s8')">葬家に紐づかない名札を作る</button></div>
+  <div class="card-body">
+   <div class="form-row" style="margin-bottom:14px">
+    <div class="form-group" style="margin:0"><label>期間（開始）</label><input type="date" class="form-control" value="2026-08-25"></div>
+    <div class="form-group" style="margin:0"><label>期間（終了）</label><input type="date" class="form-control" value="2026-08-31"></div>
+    <div class="form-group" style="margin:0"><label>会場</label><select class="custom-select">
+     <option>すべて</option><option>第一斎場</option><option>第二斎場</option><option>第三斎場</option></select></div>
+    <div class="form-group" style="margin:0"><label>葬家名で検索</label><input class="form-control" placeholder="例：佐藤"></div>
+    <div class="form-group" style="margin:0;flex:0 0 auto"><label>&nbsp;</label><button class="btn btn-primary">検索</button></div>
+   </div>
+   <table class="table"><thead><tr><th class="sortable">葬家名</th>${isVendor()?'':'<th>喪主</th>'}
+    <th class="sortable">通夜</th><th class="sortable">葬儀</th><th>会場</th>
+    <th class="nowrap">名札 確定/総数</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+   <div class="toolbar"><span class="muted small">全 ${FUNERALS.length} 件</span></div>
+  </div></div>`;
+},
+
+s2(){
+ const f=fn(S.funeralId)||FUNERALS[0];
+ const ls=LABELS.filter(l=>l.funeralId===f.id);
+ const byFmt={};ls.forEach(l=>byFmt[l.formatId]=(byFmt[l.formatId]||0)+1);
+ const rows=ls.map(l=>{const[st,cl]=SRC[l.src];return `<tr>
+  <td style="width:32px"><input type="checkbox" ${S.sel.has(l.id)?'checked':''} onchange="toggleSel('${l.id}')"></td>
+  <td>${labelFilled(l)?esc(composeLabel(l)):'<span class="muted">未入力</span>'}
+   ${isExcluded(l)?' <span class="badge b-secondary">カウント対象外</span>':''}</td>
+  <td class="nowrap">${esc(fmt(l.formatId).name)}</td>
+  <td class="nowrap small muted">${esc(l.itemName||'—')}</td>
+  <td><span class="badge ${cl}">${st}</span></td>
+  <td>${l.status==='fixed'?'<span class="badge b-success">確定</span>':'<span class="badge b-warning">下書き</span>'}</td>
+  <td class="nowrap"><button class="btn btn-outline btn-sm" onclick="editLabel('${l.id}')">編集</button>
+   <button class="btn btn-outline btn-sm" onclick="dupLabel('${l.id}')">複製</button></td></tr>`;}).join('');
+ return `<h1 class="page">${esc(f.name)} の名札</h1>
+ <div class="card"><div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap;align-items:center">
+  <div><div class="muted small">通夜</div><b>${esc(f.tsuya)}</b></div>
+  <div><div class="muted small">葬儀</div><b>${esc(f.sogi)}</b></div>
+  <div><div class="muted small">会場</div><b>${esc(f.hall)}</b></div>
+  <div class="spacer"></div>
+  <a class="btn btn-outline" href="${omLink(f.id)}"><i class="fas fa-phone"></i> 注文管理で見る</a>
+  <button class="btn btn-outline" onclick="go('s1')">葬家一覧へ戻る</button></div></div>
+ <div class="tiles">
+  <div class="tile accent"><div class="k">名札 総数</div><div class="v">${ls.length}<small>枚</small></div></div>
+  <div class="tile"><div class="k">確定済</div><div class="v">${ls.filter(l=>l.status==='fixed').length}<small>枚</small></div></div>
+  <div class="tile"><div class="k">下書き</div><div class="v">${ls.filter(l=>l.status!=='fixed').length}<small>枚</small></div></div>
+  <div class="tile"><div class="k">カウント対象</div><div class="v">${ls.filter(countable).length}<small>枚</small></div>
+   <div class="small muted">対象外 ${ls.filter(l=>l.status==='fixed'&&isExcluded(l)).length} 枚</div></div></div>
+ <div class="card">
+  <div class="card-header">名札リスト<span class="spacer"></span>
+   <button class="btn btn-primary btn-sm" onclick="newFromProducts()">手動で作る</button>
+   <button class="btn btn-outline-primary btn-sm" onclick="go('s6',{csvStep:1})">一括取り込み</button>
+   <button class="btn btn-success btn-sm" onclick="go('s7')">出力</button></div>
+  <div class="card-body">
+   <div class="pills"><button class="pill on">すべて</button>
+    ${Object.keys(byFmt).map(k=>`<button class="pill">${esc(fmt(k).name)}（${byFmt[k]}）</button>`).join('')}
+    <button class="pill">下書きのみ</button></div>
+   ${ls.length?`<table class="table"><thead><tr>
+    <th style="width:32px"><input type="checkbox" onchange="selAll('${f.id}',this.checked)"></th>
+    <th>名札の内容</th><th>フォーマット</th><th>商品</th><th>由来</th><th>状態</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <div class="toolbar"><span class="muted small">${S.sel.size} 件選択中</span>
+     <button class="btn btn-outline btn-sm" ${S.sel.size?'':'disabled'} onclick="fixSel()">選択したものを確定</button>
+     <button class="btn btn-outline btn-sm" ${S.sel.size?'':'disabled'} onclick="go('s7')">選択したものを出力</button>
+     <span class="spacer"></span>
+     <button class="btn btn-outline btn-sm" onclick="labelListCsv('${f.id}')">名札リストCSVダウンロード</button></div>`
+   :`<div class="empty">この葬家の名札はまだありません。<br>
+     <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="newFromProducts()">手動で作る</button></div>`}
+  </div></div>`;
+},
+
+s3(){
+ const cats=['すべて','供花・供物','弔電'];
+ const list=ITEMS.filter(i=>S.cat==='すべて'||i.cat===S.cat);
+ const target=S.standalone?S.standalone:(fn(S.funeralId)?.name||'');
+ const total=S.cart.reduce((a,c)=>a+c.qty,0);
+ return `<h1 class="page">商品と数量を選ぶ</h1>
+ <div class="alert alert-info">対象：<b>${esc(target)}</b>　選んだ数量ぶんの名札が作られます。商品ごとに名札を登録します。</div>
+ <div class="split"><div class="l"><div class="card"><div class="card-body">
+  <div class="pills">${cats.map(c=>`<button class="pill ${S.cat===c?'on':''}" onclick="S.cat='${c}';render()">${c}</button>`).join('')}</div>
+  <div class="pgrid">${list.map(i=>{const inC=S.cart.find(c=>c.itemId===i.id);return `<div class="pcard">
+   <div class="thumb">商品画像</div>
+   <div class="pb"><div class="nm">${esc(i.name)}</div><div class="pr">${yen(i.price)}</div>
+    <div>${i.fmt?`<span class="badge b-primary">${esc(fmt(i.fmt).name)}</span>`
+     :'<span class="badge b-secondary">フォーマット未設定</span>'}</div></div>
+   <div class="act"><input class="qty" type="number" min="1" max="20" value="${inC?inC.qty:1}" id="q_${i.id}">
+    <button class="btn btn-outline-primary btn-sm" style="flex:1" onclick="addCart('${i.id}')">${inC?'数量を更新':'追加'}</button></div>
+  </div>`;}).join('')}</div>
+ </div></div></div>
+ <div class="r"><div class="card"><div class="card-header">選択中</div>
+  <div class="card-body" style="padding:0">${S.cart.length?S.cart.map((c,i)=>{
+   const it=ITEMS.find(x=>x.id===c.itemId);return `<div class="frow">
+    <div class="fn">${esc(it.name)}<div class="small muted">${it.fmt?esc(fmt(it.fmt).name):'フォーマット未設定'}</div></div>
+    <span class="badge b-primary">${c.qty}枚</span>
+    <button class="btn btn-outline btn-sm" onclick="rmCart(${i})">削除</button></div>`;}).join('')
+   :'<div class="empty" style="padding:26px">商品を選んでください</div>'}</div>
+  <div class="card-footer"><span class="small muted">名札 ${total} 枚</span><span class="spacer"></span>
+   <button class="btn btn-primary btn-sm" ${total?'':'disabled'} onclick="cartToLabels()">名札を入力する</button></div></div>
+  <button class="btn btn-outline" style="width:100%" onclick="go(S.standalone?'s8':'s2')">戻る</button>
+ </div></div>`;
+},
+
+/* ---- S4 名札入力（注文管理モックのフォームを移植） ---- */
+s4(){
+ const l=LABELS.find(x=>x.id===S.editId);
+ if(!l)return '<div class="empty">名札が選択されていません</div>';
+ const M=fmt(l.formatId);
+ const sibs=LABELS.filter(x=>x.funeralId===l.funeralId);
+ const bump=new Set(Object.keys(l.adj).filter(k=>l.adj[k]!==0));
+ let f='';
+ f+=`<div class="fld"><label>お名前の種類</label><div style="display:flex;gap:6px">
+  <button class="btn ${l.kind==='individual'?'btn-primary':'btn-outline'}" onclick="setKind('individual')">個人</button>
+  <button class="btn ${l.kind==='corporate'?'btn-primary':'btn-outline'}" onclick="setKind('corporate')">法人</button></div></div>`;
+
+ if(l.kind==='individual'){
+  f+=`<label class="cbline"><input type="checkbox" ${l.withRelation?'checked':''} onchange="setRel(this.checked)"> 続柄を付ける（親族など）</label>`;
+  l.names.forEach((n,i)=>{
+   f+=`<div class="subbox"><div class="cap">よく使う名義（ワンタップ）</div>
+    <div class="chips">${QUICK.map(q=>`<span class="chip${n.name===q?' on':''}" onclick="setQuick(${i},'${q}')">${q}</span>`).join('')}</div>`;
+   if(i>0)f+=`<label class="cbline"><input type="checkbox" ${n.isCouple?'checked':''} onchange="setCouple(${i},this.checked)"> 夫婦（名のみ入力）</label>`;
+   if(l.withRelation)f+=`<div class="fld"><label>続柄</label>
+    <input class="form-control" value="${esc(n.relation)}" placeholder="長男" oninput="setN(${i},'relation',this.value)"></div>`;
+   const nl=n.isCouple?`名（${i+1}人目）`:(i===0?'氏名':`氏名（${i+1}人目・改行）`);
+   f+=`<div class="fld" style="margin-bottom:0"><label>${nl}</label>
+    <div style="display:flex;gap:6px">
+     <input class="form-control" value="${esc(n.name)}" placeholder="${n.isCouple?'花子':'山田 太郎'}" oninput="setN(${i},'name',this.value)">
+     <button class="btn btn-outline btn-sm nowrap" onclick="openGaiji('n',${i},'name')">字が出ない</button></div>
+    </div></div>`;
+  });
+  f+=`<div style="display:flex;gap:8px;margin-bottom:10px">
+   ${l.names.length>1?'<button class="btn btn-outline btn-sm" onclick="rmName()">－ 削除</button>':''}
+   ${l.names.length<M.maxNames?`<button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="addName()">＋ 改行追加</button>`
+    :'<span class="help" style="margin-left:auto">上限 '+M.maxNames+' 名</span>'}</div>`;
+ }else{
+  l.corps.forEach((c,ci)=>{
+   f+=`<div class="subbox"><div class="cap">団体 ${ci+1}</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+     <div class="fld" style="width:132px;margin-bottom:0"><label>会社種別</label>
+      <select class="custom-select" onchange="setC(${ci},'type',this.value)">
+       ${CORP_TYPES.map(t=>`<option ${c.type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+     <div class="fld" style="flex:1;margin-bottom:0"><label>会社・団体名</label>
+      <div style="display:flex;gap:6px">
+       <input class="form-control" value="${esc(c.company)}" placeholder="〇〇" oninput="setC(${ci},'company',this.value)">
+       <button class="btn btn-outline btn-sm nowrap" onclick="openGaiji('c',${ci},'company')">字が出ない</button></div></div></div>
+    <div class="fld"><label>役職・肩書き（よく使う肩書き→編集可）</label>
+     <div class="chips">${TITLE_QUICK.map(t=>`<span class="chip${c.title===t?' on':''}" onclick="setC(${ci},'title','${t}',1)">${t}</span>`).join('')}</div>
+     <input class="form-control" value="${esc(c.title)}" placeholder="代表取締役" oninput="setC(${ci},'title',this.value)"></div>
+    <div class="fld" style="margin-bottom:0"><label>お名前（よく使う名義→編集可）</label>
+     <div class="chips">${CORP_QUICK.map(q=>`<span class="chip${c.name===q?' on':''}" onclick="setC(${ci},'name','${q}',1)">${q}</span>`).join('')}</div>
+     <div style="display:flex;gap:6px">
+      <input class="form-control" value="${esc(c.name)}" placeholder="山田 太郎" oninput="setC(${ci},'name',this.value)">
+      <button class="btn btn-outline btn-sm nowrap" onclick="openGaiji('c',${ci},'name')">字が出ない</button></div></div></div>`;
+  });
+  f+=`<div style="display:flex;gap:8px;margin-bottom:10px">
+   ${l.corps.length>1?'<button class="btn btn-outline btn-sm" onclick="rmCorp()">－ 団体を削除</button>':''}
+   ${l.corps.length<M.maxCorps?`<button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="addCorp()">＋ 団体を追加</button>`
+    :'<span class="help" style="margin-left:auto">上限 '+M.maxCorps+' 件</span>'}</div>`;
+ }
+ f+=`<div class="fld"><label>備考・メモ（旧漢字・外字・指示など）</label>
+  <textarea class="form-control" rows="2" placeholder="例）「髙」は旧字／「﨑」は立つ崎" oninput="setNote(this.value)">${esc(l.note)}</textarea></div>
+  <div class="pvline">名札プレビュー：<b id="pvtext">${esc(composeLabel(l))||'—'}</b></div>`;
+
+ const gj=labelTexts(l).flatMap(t=>[...t]).filter(c=>GAIJI.includes(c));
+
+ return `<h1 class="page">名札を入力</h1>
+ <div class="split"><div class="l">
+  <div class="lblock"><div class="lh">${esc(l.itemName||'名札')}
+   <span class="badge b-primary">${esc(M.name)}</span>
+   <span class="small muted">${M.call}／${M.W}×${M.H}mm</span><span class="spacer"></span>
+   <span class="badge ${labelFilled(l)?'b-success':'b-secondary'}" id="lbadge">${labelFilled(l)?'名札 入力済':'名札 未入力'}</span></div>
+   <div style="padding:13px">${f}
+   ${gj.length?`<div class="alert alert-warn" style="margin-top:12px;margin-bottom:0">
+    外字の可能性がある文字が含まれています：<b>${gj.map(esc).join('　')}</b>
+    <div class="small" style="margin-top:4px">MJ番号まで特定しておくと、字形の取り違えを防げます。
+     違う字形が必要な場合は、各入力欄の「字が出ない」から探してください。</div></div>`:''}
+   </div>
+   <div class="card-footer"><button class="btn btn-outline" onclick="go(l.funeralId?'s2':'s8')">戻る</button>
+    <span class="spacer"></span><button class="btn btn-outline" onclick="saveDraft()">下書き保存</button>
+    <button class="btn btn-primary" ${labelFilled(l)?'':'disabled'} onclick="fixLabel()">確定する</button></div>
+  </div>
+  ${sibs.length>1?`<div class="card"><div class="card-header">この葬家の名札（${sibs.length}）</div>
+   <div class="card-body" style="padding:0">${sibs.map(x=>`<div class="frow" style="${x.id===l.id?'background:#f0f7ff':''}">
+    <div class="fn">${labelFilled(x)?esc(composeLabel(x)):'<span class="muted">未入力</span>'}</div>
+    <span class="badge ${x.status==='fixed'?'b-success':'b-warning'}">${x.status==='fixed'?'確定':'下書き'}</span>
+    ${x.id===l.id?'<span class="badge b-primary">編集中</span>':`<button class="btn btn-outline btn-sm" onclick="editLabel('${x.id}')">編集</button>`}
+   </div>`).join('')}</div></div>`:''}
+ </div>
+ <div class="r">
+  <div class="card"><div class="card-header">プレビュー<span class="spacer"></span>
+   <span class="small muted">実寸 ${M.W}×${M.H}mm</span></div>
+   <div class="card-body" style="display:flex;justify-content:center" id="fudabox">${fudaHtml(l,300,true,bump)}</div>
+   <div class="card-footer"><button class="btn ${S.tuneOpen?'btn-primary':'btn-outline-primary'}"
+    style="width:100%;justify-content:center" onclick="S.tuneOpen=!S.tuneOpen;render()">微調整 ${S.tuneOpen?'を閉じる':'を開く'}</button></div></div>
+  ${S.tuneOpen?tunePanel(l):''}
+ </div></div>`;
+},
+
+s6(){
+ const f=fn(S.funeralId);
+ const steps=['テンプレート','アップロード','AIによる割当','確認・調整','確定'];
+ const head=`<h1 class="page">一括取り込み</h1>
+  <div class="alert alert-info">対象：<b>${esc(f?f.name:'—')}</b>　法人からまとめて受け取った名札データを取り込みます。</div>
+  <div class="stepper">${steps.map((t,i)=>`<div class="st ${S.csvStep===i+1?'on':''} ${S.csvStep>i+1?'done':''}">
+   <span class="n">${S.csvStep>i+1?'✓':i+1}</span>${t}</div>`).join('')}</div>`;
+ if(S.csvStep===1)return head+`<div class="card"><div class="card-header">1. テンプレートCSVをダウンロード</div>
+  <div class="card-body"><p class="muted small">名札フォーマットごとに列構成が異なるため、フォーマット別にダウンロードします。
+   Excelで開けるようBOM付きUTF-8で出力します。</p>
+  <div class="flist">${Object.values(FORMATS).map(F=>`<div class="frow">
+   <div class="fn mono">名札テンプレート_${esc(F.name)}.csv</div><span class="badge b-primary">${esc(F.name)}</span>
+   <button class="btn btn-outline btn-sm" onclick="templateCsv('${F.id}')">ダウンロード</button></div>`).join('')}</div>
+  <div class="alert alert-info" style="margin:14px 0 0">このボタンは実際にファイルが落ちます。記入して次の画面で読み込ませてください。</div></div>
+  <div class="card-footer"><button class="btn btn-outline" onclick="go('s2')">戻る</button><span class="spacer"></span>
+   <button class="btn btn-primary" onclick="S.csvStep=2;render()">次へ</button></div></div>`;
+ if(S.csvStep===2)return head+`<div class="card"><div class="card-header">2. 記入済みのCSVをアップロード</div>
+  <div class="card-body"><div class="drop">ここにCSVファイルをドロップ<br><span class="small">または</span><br>
+   <input type="file" accept=".csv,text/csv" id="csvFile" style="display:none" onchange="onCsvFile(this)">
+   <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="document.getElementById('csvFile').click()">ファイルを選択</button>
+   <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="loadCsv()">サンプルで試す</button>
+   <div class="small" style="margin-top:9px">最大10MB／UTF-8・Shift_JIS 自動判定</div></div></div>
+  <div class="card-footer"><button class="btn btn-outline" onclick="S.csvStep=1;render()">戻る</button></div></div>`;
+ if(S.csvStep===3){
+  return head+`<div class="card"><div class="card-header">3. AIによる割当結果</div><div class="card-body">
+   <p class="muted small">受け取ったデータは itowa の様式とは限りません。1つのセルに社名・肩書・氏名が混ざっている場合、AIが分解し、個人か法人かも判別します。確度の低いものを上に並べています。</p>
+   <table class="table"><thead><tr><th>元のテキスト</th><th>種別</th><th>会社・団体名</th><th>肩書</th><th>お名前</th><th>確度</th></tr></thead>
+   <tbody>${S.csvRows.map(r=>`<tr><td class="small">${esc(r.raw)}</td>
+    <td><span class="badge ${r.kind==='corporate'?'b-info':'b-secondary'}">${r.kind==='corporate'?'法人':'個人'}</span></td>
+    <td class="small">${r.co?esc(r.co):'<span class="muted">—</span>'}</td>
+    <td class="small">${r.ti?esc(r.ti):'<span class="muted">—</span>'}</td>
+    <td class="small"><b>${esc(r.na)}</b></td>
+    <td>${r.conf<0.8?'<span class="badge b-warning">要確認</span>':'<span class="badge b-success">確度高</span>'}</td></tr>`).join('')}</tbody></table>
+   </div><div class="card-footer"><button class="btn btn-outline" onclick="S.csvStep=2;render()">戻る</button><span class="spacer"></span>
+   <button class="btn btn-primary" onclick="S.csvStep=4;render()">確認・調整へ</button></div></div>`;
+ }
+ if(S.csvStep===4){
+  const r=S.csvRows[S.csvEditId]||S.csvRows[0];
+  const tmp=mkLabel({formatId:'F1',kind:r.kind,
+   names:[{relation:'',name:r.na,isCouple:false}],
+   corps:[{type:'（記載なし）',company:r.co,title:r.ti,name:r.na}]});
+  return head+`<div class="alert alert-warn">この状態は<b>下書きとしてDBに保存</b>されます。別の端末・別の日でも続きから作業できます。</div>
+  <div class="split"><div class="l"><div class="card">
+   <div class="card-header">4. 1件ずつ確認する<span class="spacer"></span><span class="small muted">${S.csvRows.length} 件</span></div>
+   <div class="card-body" style="padding:0">${S.csvRows.map((x,i)=>`<div class="frow"
+    style="${i===S.csvEditId?'background:#f0f7ff':''};cursor:pointer" onclick="S.csvEditId=${i};render()">
+    <div class="fn">${esc([x.co,x.ti,x.na].filter(Boolean).join('　'))}
+     <div class="small muted">元：${esc(x.raw)}</div></div>
+    <span class="badge ${x.kind==='corporate'?'b-info':'b-secondary'}">${x.kind==='corporate'?'法人':'個人'}</span>
+    ${x.conf<0.8?'<span class="badge b-warning">要確認</span>':''}</div>`).join('')}</div>
+   <div class="card-footer"><button class="btn btn-outline" onclick="S.csvStep=3;render()">戻る</button><span class="spacer"></span>
+    <button class="btn btn-outline" onclick="alert('下書きとして保存しました（モック）')">下書き保存して中断</button>
+    <button class="btn btn-primary" onclick="S.csvStep=5;render()">すべて確定する</button></div></div></div>
+   <div class="r"><div class="card"><div class="card-header">プレビュー</div>
+    <div class="card-body" style="display:flex;justify-content:center">${fudaHtml(tmp,280,true)}</div></div></div></div>`;
+ }
+ return head+`<div class="card"><div class="card-header">5. 確定</div><div class="card-body">
+  <div class="alert alert-info"><b>${S.csvRows.length} 件</b>を名札リストに追加しました。ここでカウントが立ちます。</div>
+  <table class="table"><thead><tr><th>名札の内容</th><th>種別</th><th>カウント</th></tr></thead><tbody>
+  ${S.csvRows.map(r=>`<tr><td>${esc([r.co,r.ti,r.na].filter(Boolean).join('　'))}</td>
+   <td>${r.kind==='corporate'?'法人':'個人'}</td>
+   <td>${EXCLUDE.includes(r.na)?'<span class="badge b-secondary">対象外</span>':'<span class="badge b-success">対象</span>'}</td></tr>`).join('')}
+  </tbody></table></div>
+  <div class="card-footer"><button class="btn btn-primary" onclick="commitCsv()">名札リストへ戻る</button></div></div>`;
+},
+
+s7(){
+ const f=fn(S.funeralId);
+ const ls=LABELS.filter(l=>l.funeralId===S.funeralId&&l.status==='fixed');
+ const byFmt={};ls.forEach(l=>{(byFmt[l.formatId]=byFmt[l.formatId]||[]).push(l);});
+ const keys=Object.keys(byFmt);
+ const ng=ls.filter(l=>!fitCheck(l).ok);
+ return `<h1 class="page">出力</h1>
+ <div class="alert alert-info">対象：<b>${esc(f?f.name:'—')}</b> の確定済み名札 ${ls.length} 枚</div>
+ <div class="card"><div class="card-header">生成されるファイル</div><div class="card-body">
+  <p class="muted small">名札フォーマットごとに1つのPDFにまとめ、連続ページで出力します。PDFの用紙サイズは名札の実寸です。</p>
+  <div class="flist">${keys.length?keys.map(k=>{const F=fmt(k);const n=byFmt[k].length;return `<div class="frow">
+   <div class="fn mono">${esc(f?f.name:'')}_${esc(F.name)}.pdf</div>
+   <span class="badge b-primary">${F.W}×${F.H}mm</span>
+   <span class="small muted nowrap">${n} ページ／約 ${(n*26.6).toFixed(0)} KB</span>
+   <button class="btn btn-primary btn-sm" onclick="openPrintView('${S.funeralId}','${k}')">実寸で開いて印刷</button>
+  </div>`;}).join(''):'<div class="empty">確定済みの名札がありません</div>'}</div>
+  ${keys.length>1?`<div class="toolbar">
+   <button class="btn btn-success" onclick="alert('複数フォーマットをZIPにまとめます（本番はサーバ側で生成）')">すべてまとめてZIPでダウンロード</button></div>`:''}
+  <div class="alert alert-warn" style="margin-top:16px;margin-bottom:0"><b>初回のみ確認してください。</b>
+   印刷ダイアログで用紙サイズを名札の実寸に、拡大縮小を「実際のサイズ」に、余白を「なし」に設定してください。
+   「ページに合わせる」にすると寸法がずれます。手差しトレイに用紙をまとめて置いた状態で印刷できます。</div>
+ </div></div>
+
+ <div class="card"><div class="card-header">収まり判定
+   ${ng.length?`<span class="badge b-danger">${ng.length} 件はみ出し</span>`:'<span class="badge b-success">全件OK</span>'}</div>
+  <div class="card-body">
+  <p class="muted small">印字領域に収まっているかを1枚ずつ機械的に確認します。受け入れテストでも同じ判定を使います。</p>
+  ${ls.length?`<table class="table"><thead><tr><th>名札の内容</th><th>フォーマット</th>
+   <th class="num">文字サイズ</th><th class="num">使用率</th><th class="num">下端</th><th class="num">限界</th><th>判定</th></tr></thead><tbody>
+   ${ls.map(l=>{const r=fitCheck(l);return `<tr>
+    <td class="small">${esc(composeLabel(l))}</td><td class="nowrap">${esc(fmt(l.formatId).name)}</td>
+    <td class="num">${r.nf.toFixed(1)} mm<br><span class="small muted">${(r.nf/0.352778).toFixed(0)} pt</span></td>
+    <td class="num">${Math.round(r.use*100)}%</td><td class="num">${r.end.toFixed(1)} mm</td>
+    <td class="num">${r.lim.toFixed(1)} mm</td>
+    <td>${r.ok?'<span class="badge b-success">○</span>'
+      :'<span class="badge b-danger">× '+(r.end-r.lim).toFixed(1)+'mm</span>'}</td></tr>`;}).join('')}
+   </tbody></table>`:'<div class="empty">対象がありません</div>'}
+ </div></div>
+
+ <div class="card"><div class="card-header">生成の実測値（サーバ側PoC）</div><div class="card-body">
+  <table class="table"><tbody>
+   <tr><th style="width:190px">用紙サイズ</th><td>PDFのMediaBoxを名札の実寸に設定。195×495mm を実測で確認済み</td></tr>
+   <tr><th>生成速度</th><td>1枚あたり約 31ms。200枚で約 6秒</td></tr>
+   <tr><th>ファイルサイズ</th><td>1枚あたり約 27KB。200枚で約 5MB</td></tr>
+   <tr><th>文字の扱い</th><td>フォントのアウトラインをベクタパスとして描画。
+     <b>PDFにフォントファイルは含まれません</b></td></tr>
+   <tr><th>外字</th><td>生成済みの字形画像を、周りの文字と同じ大きさ・位置に差し込み。
+     字面枠から自動で位置合わせ</td></tr>
+  </tbody></table>
+  <div class="help">この画面の「実寸で開いて印刷」はブラウザの印刷機能を使っています。
+   本番はサーバ側でPDFを生成しますが、用紙サイズと組み方は同じです。</div>
+ </div></div>
+
+ <div class="card"><div class="card-header">出力履歴</div><div class="card-body">
+  <table class="table"><thead><tr><th>日時</th><th>ファイル</th><th class="num">枚数</th><th>カウント</th></tr></thead><tbody>
+   <tr><td class="nowrap">8/24 16:22</td><td class="small">佐藤家_供花札 大.pdf</td><td class="num">2</td><td><span class="badge b-success">加算済</span></td></tr>
+   <tr><td class="nowrap">8/24 17:05</td><td class="small">佐藤家_供花札 大.pdf</td><td class="num">2</td><td><span class="badge b-secondary">再出力（加算なし）</span></td></tr>
+  </tbody></table>
+  <div class="help">同じ名札を出し直してもカウントは増えません。名札レコード単位で判定します。</div>
+ </div></div>
+ <button class="btn btn-outline" onclick="go('s2')">名札リストへ戻る</button>`;
+},
+
+s8(){
+ const list=LABELS.filter(l=>!l.funeralId);
+ return `<h1 class="page">個別作成</h1>
+ <div class="alert alert-info">葬家に紐づかない名札を作ります。葬家一覧に対象が無いときに使います。</div>
+ <div class="card"><div class="card-header">新しく作る</div><div class="card-body">
+  <div class="form-group" style="max-width:420px"><label>作業の目印（任意）</label>
+   <input class="form-control" id="saLabel" placeholder="例：8/25 〇〇会館分">
+   <div class="help">後から探しやすくするためのラベルです。名札には印字されません。</div></div></div>
+  <div class="card-footer"><button class="btn btn-outline" onclick="go('s1')">戻る</button><span class="spacer"></span>
+   <button class="btn btn-primary" onclick="startStandalone()">商品を選ぶ</button></div></div>
+ <div class="card"><div class="card-header">個別作成した名札</div><div class="card-body" style="padding:0">
+  ${list.length?list.map(l=>`<div class="frow">
+   <div class="fn">${labelFilled(l)?esc(composeLabel(l)):'<span class="muted">未入力</span>'}
+    <div class="small muted">${esc(l.itemName||'')}</div></div>
+   <span class="badge b-primary">${esc(fmt(l.formatId).name)}</span>
+   <span class="badge ${l.status==='fixed'?'b-success':'b-warning'}">${l.status==='fixed'?'確定':'下書き'}</span>
+   <button class="btn btn-outline btn-sm" onclick="editLabel('${l.id}')">編集</button></div>`).join('')
+  :'<div class="empty">まだありません</div>'}</div></div>
+ <div class="alert alert-warn">未決：個別作成分をカウント対象に含めるか、含める場合の請求先の決め方。</div>`;
+},
+
+/* ============ S10 名札マスタ設定（葬儀社が目で見て決める） ============ */
+s10(){
+ const F=fmt(S.mfid);
+ const CAPS=[['na','個人名',12,80],['cn','名前（法人）',12,80],['co','会社・団体名',8,60],
+             ['ti','肩書',6,40],['rel','続柄',6,40],['hd','上部の文言',12,60]];
+ const samples=[
+  ['子供一同', mkLabel({formatId:S.mfid,names:[{name:'子供一同'}]})],
+  ['個人1名',  mkLabel({formatId:S.mfid,names:[{name:'山田 太郎'}]})],
+  ['連名3名',  mkLabel({formatId:S.mfid,names:[{name:'佐藤 一郎'},{name:'佐藤 花子'},{name:'佐々木 健太郎'}]})],
+  ['法人',     mkLabel({formatId:S.mfid,kind:'corporate',
+                corps:[{type:'株式会社',company:'サンプル商事',title:'代表取締役',name:'青木 一郎'}]})],
+  ['法人・長い社名', mkLabel({formatId:S.mfid,kind:'corporate',
+                corps:[{type:'株式会社',company:'セレモニーホールさくら中央',title:'常務取締役営業本部長',name:'緑川 修一郎'}]})],
+  ['連名6名',  mkLabel({formatId:S.mfid,names:['一郎','二郎','三郎','四郎','五郎','六郎'].map(x=>({name:'山田 '+x}))})],
+ ];
+ const rows=samples.map(([n,l])=>{const r=fitCheck(l);return {n,l,r};});
+ const ng=rows.filter(x=>!x.r.ok).length;
+
+ return `<h1 class="page">名札マスタ設定</h1>
+ <div class="alert alert-info">用紙の寸法はご提出いただいたシートから取り込んであります。
+  <b>文字の大きさと組み方は、この画面で実物を見ながら決めてください。</b>数値で決めるより、目で見たほうが確実です。</div>
+
+ <div class="card"><div class="card-body" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+  <label style="font-weight:600;font-size:13px">名札の種類</label>
+  <div class="pills" style="margin:0">${Object.values(FORMATS).map(f=>
+   `<button class="pill ${S.mfid===f.id?'on':''}" onclick="S.mfid='${f.id}';render()">${esc(f.name)}</button>`).join('')}</div>
+  <span class="spacer"></span>
+  <span class="small muted">${F.call}／${F.W}×${F.H}mm　余白 上${F.top} 下${F.bottom} 左右${F.side}mm</span>
+ </div></div>
+
+ <div class="card">
+  <div class="card-header">会場に並べたときの見え方
+   ${ng?`<span class="badge b-danger">${ng} 件はみ出し</span>`:'<span class="badge b-success">全件OK</span>'}
+   <span class="spacer"></span><span class="small muted">上揃えなので、名義の長さが違っても頭の位置が揃います</span></div>
+  <div class="card-body" style="background:#fbfaf7">
+   <div style="display:flex;gap:10px;overflow-x:auto;align-items:flex-start;padding-bottom:6px">
+    ${rows.map(x=>`<div style="flex:0 0 auto;text-align:center">
+      ${fudaHtml(x.l,300,false,null)}
+      <div class="small muted" style="margin-top:6px">${x.n}<br>
+       <b>${x.r.nf.toFixed(1)}mm</b>（${(x.r.nf/0.352778).toFixed(0)}pt）／${Math.round(x.r.use*100)}%
+       ${x.r.ok?'':'<br><span class="badge b-danger">はみ出し</span>'}</div></div>`).join('')}
+   </div>
+  </div>
+ </div>
+
+ <div class="split"><div class="l">
+  <div class="card"><div class="card-header">文字の大きさの上限</div><div class="card-body">
+   <p class="muted small" style="margin-top:0">「子供一同」のように文字数が少ないとき、どこまで大きくするかの上限です。
+    文字数が多いときは自動で縮むので、この値を超えることはありません。</p>
+   ${CAPS.map(([k,lab,lo,hi])=>`<div class="slrow">
+    <div class="slh"><span class="lab">${lab}</span>
+     <span class="mm">${F.cap[k]} mm</span>
+     <span class="val">${(F.cap[k]/0.352778).toFixed(0)} pt</span></div>
+    <input type="range" min="${lo}" max="${hi}" step="1" value="${F.cap[k]}"
+     oninput="setCap('${k}',this.value)"></div>`).join('')}
+  </div></div>
+ </div>
+ <div class="r" style="flex:1 1 300px">
+  <div class="card"><div class="card-header">組み方</div><div class="card-body">
+   <div class="slrow"><div class="slh"><span class="lab">字送り（文字の間隔）</span>
+     <span class="val">${F.lh.toFixed(2)} 倍</span></div>
+    <input type="range" min="0.95" max="1.80" step="0.01" value="${F.lh}" oninput="setLay('lh',this.value)"></div>
+   <div class="slrow"><div class="slh"><span class="lab">字幅（長体・平体）</span>
+     <span class="val">${F.sx.toFixed(2)} 倍</span></div>
+    <input type="range" min="0.75" max="1.15" step="0.01" value="${F.sx}" oninput="setLay('sx',this.value)"></div>
+   <div class="form-group" style="margin-bottom:0"><label>短い名義のときの縦位置</label>
+    <div class="pills">${[['top','上に詰める'],['middle','天地中央'],['optical','やや上']].map(([v,t])=>
+     `<button class="pill ${F.valign===v?'on':''}" onclick="setLay('valign','${v}')">${t}</button>`).join('')}</div>
+    <div class="help">名札を会場に並べたとき、上に詰めると頭の位置が揃って見えます。</div></div>
+  </div>
+  <div class="card-footer"><button class="btn btn-outline btn-sm" onclick="resetFmt()">既定に戻す</button>
+   <span class="spacer"></span>
+   <button class="btn btn-outline btn-sm" onclick="exportFmt()">値を書き出す</button>
+   <button class="btn btn-primary btn-sm" onclick="alert('この設定を保存しました（モック）')">保存する</button></div>
+  </div>
+ </div></div>`;
+},
+
+s9(){
+ const months=[['2026-08',428],['2026-07',391],['2026-06',356],['2026-05',402],['2026-04',318],['2026-03',287]];
+ const mx=Math.max(...months.map(m=>m[1]));
+ return `<h1 class="page">利用状況</h1>
+ <div class="tabs"><button>売上高</button><button>注文件数</button><button class="on">名札生成数</button></div>
+ <div class="card"><div class="card-body" style="display:flex;gap:12px;align-items:center">
+  <label style="font-weight:600;font-size:13px">対象月</label>
+  <select class="custom-select" style="width:170px">${months.map(m=>`<option>${m[0].replace('-','年')}月</option>`).join('')}</select>
+  <span class="spacer"></span><button class="btn btn-outline btn-sm" onclick="usageCsv()">明細CSVダウンロード</button></div></div>
+ <div class="tiles">
+  <div class="tile accent"><div class="k">当月の生成数（カウント対象）</div><div class="v">428<small>枚</small></div>
+   <div class="small muted">請求の参照元</div></div>
+  <div class="tile"><div class="k">カウント対象外</div><div class="v">63<small>枚</small></div>
+   <div class="small muted">定型語のみの名札</div></div>
+  <div class="tile"><div class="k">作成した名札の総数</div><div class="v">491<small>枚</small></div></div>
+  <div class="tile"><div class="k">前月比</div><div class="v">+9.5<small>%</small></div>
+   <div class="small muted">先月 391 枚</div></div></div>
+ <div class="split"><div class="l">
+  <div class="card"><div class="card-header">由来別の内訳</div><div class="card-body">
+   <div class="bar" style="margin-bottom:12px"><i style="width:46%;background:#007bff"></i>
+    <i style="width:27%;background:#17a2b8"></i><i style="width:16%;background:#6c757d"></i>
+    <i style="width:11%;background:#ffc107"></i></div>
+   <table class="table"><thead><tr><th>由来</th><th class="num">枚数</th><th class="num">比率</th></tr></thead><tbody>
+    <tr><td><span class="badge b-primary">Web注文</span></td><td class="num">197</td><td class="num">46.0%</td></tr>
+    <tr><td><span class="badge b-info">注文管理</span></td><td class="num">116</td><td class="num">27.1%</td></tr>
+    <tr><td><span class="badge b-secondary">名札作成メニュー</span></td><td class="num">68</td><td class="num">15.9%</td></tr>
+    <tr><td><span class="badge b-warning">一括取り込み</span></td><td class="num">47</td><td class="num">11.0%</td></tr>
+   </tbody></table></div></div>
+  <div class="card"><div class="card-header">月別の推移</div><div class="card-body">
+   <div style="display:flex;align-items:flex-end;gap:12px;height:150px">
+    ${months.slice().reverse().map(m=>`<div style="flex:1;text-align:center">
+     <div style="background:${m[0]==='2026-08'?'#007bff':'#adb5bd'};height:${m[1]/mx*116}px;border-radius:2px 2px 0 0"></div>
+     <div class="small muted" style="margin-top:5px">${m[0].slice(5)}月</div><div class="small"><b>${m[1]}</b></div></div>`).join('')}
+   </div></div></div>
+ </div>
+ <div class="r" style="flex:1 1 300px">
+  <div class="card"><div class="card-header">フォーマット別</div><div class="card-body" style="padding:0">
+   ${[['供花札 大',241],['供花札 中',122],['供物札',65]].map(x=>`<div class="frow"><div class="fn">${x[0]}</div>
+    <b style="font-variant-numeric:tabular-nums">${x[1]}</b><span class="small muted">枚</span></div>`).join('')}</div></div>
+  <div class="card"><div class="card-header">日別明細（抜粋）</div><div class="card-body" style="padding:0">
+   ${[['8/25',34],['8/24',28],['8/23',41],['8/22',19],['8/21',26]].map(x=>`<div class="frow"><div class="fn">${x[0]}</div>
+    <b style="font-variant-numeric:tabular-nums">${x[1]}</b><span class="small muted">枚</span></div>`).join('')}</div></div>
+ </div></div>`;
+},
+};
+
+/* ============ 微調整パネル（行ごと・相対比率） ============ */
+function tuneFields(l){
+ const F=[];
+ if(l.kind==='individual'){
+  l.names.forEach((n,i)=>{ if(!n.name.trim())return;
+   if(l.withRelation)F.push({key:'r'+i,kk:'続柄',t:n.relation||'（続柄）'});
+   F.push({key:'n'+i,kk:'氏名',t:n.name});});
+ }else{
+  l.corps.forEach((c,i)=>{
+   const type=c.type==='（記載なし）'?'':c.type;
+   if(c.company.trim())F.push({key:'o'+i,kk:'社名',t:type+c.company});
+   if(c.title.trim())F.push({key:'t'+i,kk:'肩書',t:c.title});
+   if(c.name.trim())F.push({key:'c'+i,kk:'氏名',t:c.name});});
+ }
+ return F;
+}
+function fieldMM(l){
+ const g=fudaGeom(l),out={};
+ g.specs.forEach(s=>{
+  if(s.t==='org')out[s.key]=g.NF*s.ro;
+  else if(s.t==='cname'){out[s.key]=g.NF*s.rn;if(s.tkey)out[s.tkey]=g.NF*s.rt;}
+  else{out[s.key]=g.NF*s.rn;out['r'+s.key.slice(1)]=g.NF*s.rr;}
+ });
+ return out;
+}
+function tunePanel(l){
+ const F=tuneFields(l),mm=fieldMM(l);
+ if(!F.length)return `<div class="tune"><div class="tb"><span class="muted small">名前を入力すると調整できます。</span></div></div>`;
+ return `<div class="tune"><div class="th">微調整<span class="spacer"></span>
+  <button class="btn btn-outline btn-sm" onclick="resetAdj()">0に戻す</button></div>
+  <div class="tb"><p class="small muted" style="margin-top:0">行ごとに調整します。<b>相対比率</b>方式のため、
+   押した行は必ず相対的に大きくなり、そのぶん他の行が小さくなります。全体は常に印字領域に収まります。</p>
+  ${F.map(f=>{const a=l.adj[f.key]||0;return `<div class="slrow">
+   <div class="slh"><span class="kk">${f.kk}</span><span class="lab">${esc(f.t)}</span>
+    <span class="mm" data-mm="${f.key}">${(mm[f.key]||0).toFixed(1)}mm</span>
+    <span class="val ${a===0?'z':''}" data-v="${f.key}">${a>0?'+':''}${a}</span></div>
+   <input type="range" min="-5" max="5" step="1" value="${a}" oninput="setAdj('${f.key}',this.value)"></div>`;}).join('')}
+  <div class="help">名札1枚ごとに保存されます。この画面でのみ調整でき、注文管理やアプリには表示されません。</div>
+ </div></div>`;
+}
+
+/* ============ 操作 ============ */
+const cur=()=>LABELS.find(l=>l.id===S.editId);
+function refresh(){
+ const l=cur();if(!l)return;
+ const bump=new Set(Object.keys(l.adj).filter(k=>l.adj[k]!==0));
+ const box=document.getElementById('fudabox');
+ if(box)box.innerHTML=fudaHtml(l,300,true,bump);
+ const pv=document.getElementById('pvtext');if(pv)pv.textContent=composeLabel(l)||'—';
+ const bd=document.getElementById('lbadge');
+ if(bd){const ok=labelFilled(l);bd.className='badge '+(ok?'b-success':'b-secondary');bd.textContent=ok?'名札 入力済':'名札 未入力';}
+ const btn=[...document.querySelectorAll('.card-footer .btn-primary')].find(b=>b.textContent.includes('確定する'));
+ if(btn)btn.disabled=!labelFilled(l);
+ const mm=fieldMM(l);
+ document.querySelectorAll('[data-mm]').forEach(e=>{e.textContent=(mm[e.dataset.mm]||0).toFixed(1)+'mm';});
+}
+function setKind(k){cur().kind=k;cur().adj={};render();}
+function setRel(v){cur().withRelation=v;cur().adj={};render();}
+function setCouple(i,v){cur().names[i].isCouple=v;render();}
+function setN(i,f,v){cur().names[i][f]=v;refresh();}
+function setC(i,f,v,re){cur().corps[i][f]=v;re?render():refresh();}
+function setQuick(i,v){cur().names[i].name=v;render();}
+function setNote(v){cur().note=v;}
+function addName(){cur().names.push({relation:'',name:'',isCouple:false});render();}
+function rmName(){const l=cur();l.names.pop();l.adj={};render();}
+function addCorp(){cur().corps.push({type:'株式会社',company:'',title:'代表取締役',name:''});render();}
+function rmCorp(){const l=cur();l.corps.pop();l.adj={};render();}
+function setAdj(k,v){
+ const l=cur();l.adj[k]=+v;
+ const bump=new Set(Object.keys(l.adj).filter(x=>l.adj[x]!==0));
+ const box=document.getElementById('fudabox');if(box)box.innerHTML=fudaHtml(l,300,true,bump);
+ const mm=fieldMM(l);
+ document.querySelectorAll('[data-mm]').forEach(e=>{e.textContent=(mm[e.dataset.mm]||0).toFixed(1)+'mm';});
+ const el=document.querySelector('[data-v="'+k+'"]');
+ if(el){const a=l.adj[k];el.textContent=(a>0?'+':'')+a;el.classList.toggle('z',a===0);}
+}
+function resetAdj(){cur().adj={};render();}
+function saveDraft(){cur().status='draft';alert('下書きとして保存しました（モック）');render();}
+function fixLabel(){const l=cur();l.status='fixed';
+ const n=LABELS.find(x=>x.funeralId===l.funeralId&&x.status!=='fixed'&&x.id!==l.id);
+ if(n){S.editId=n.id;render();}else go(l.funeralId?'s2':'s8');}
+function editLabel(id){S.editId=id;go('s4');}
+function dupLabel(id){const o=LABELS.find(l=>l.id===id);
+ const c=JSON.parse(JSON.stringify(o));c.id='L'+(++LID);c.status='draft';c.src='manual';LABELS.push(c);render();}
+function toggleSel(id){S.sel.has(id)?S.sel.delete(id):S.sel.add(id);render();}
+function selAll(fid,on){LABELS.filter(l=>l.funeralId===fid).forEach(l=>on?S.sel.add(l.id):S.sel.delete(l.id));render();}
+function fixSel(){LABELS.forEach(l=>{if(S.sel.has(l.id)&&labelFilled(l))l.status='fixed';});S.sel.clear();render();}
+function newFromProducts(){S.cart=[];S.standalone=null;go('s3');}
+function startStandalone(){S.standalone=($('#saLabel')?.value||'個別作成');S.cart=[];go('s3');}
+function addCart(id){const q=Math.max(1,+(document.getElementById('q_'+id)?.value||1));
+ const e=S.cart.find(c=>c.itemId===id);if(e)e.qty=q;else S.cart.push({itemId:id,qty:q});render();}
+function rmCart(i){S.cart.splice(i,1);render();}
+function cartToLabels(){let first=null;
+ S.cart.forEach(c=>{const it=ITEMS.find(x=>x.id===c.itemId);
+  for(let i=0;i<c.qty;i++){const l=mkLabel({funeralId:S.standalone?null:S.funeralId,
+   formatId:it.fmt||'F1',itemName:it.name,src:'manual'});LABELS.push(l);if(!first)first=l.id;}});
+ S.cart=[];S.editId=first;go('s4');}
+function loadCsv(){
+ S.csvRows=[
+  {raw:'株式会社サンプル商事 営業部 青木 健太郎',kind:'corporate',co:'サンプル商事',ti:'営業部',na:'青木 健太郎',conf:.94},
+  {raw:'みどり建設　代表取締役　緑川 修',        kind:'corporate',co:'みどり建設',ti:'代表取締役',na:'緑川 修',conf:.91},
+  {raw:'田中 一郎',                              kind:'individual',co:'',ti:'',na:'田中 一郎',conf:.97},
+  {raw:'株式会社サンプル 営業部 一同',           kind:'corporate',co:'サンプル',ti:'営業部',na:'一同',conf:.72},
+  {raw:'あおぞら工業 取締役 山本 花子',           kind:'corporate',co:'あおぞら工業',ti:'取締役',na:'山本 花子',conf:.68},
+  {raw:'子供一同',                               kind:'individual',co:'',ti:'',na:'子供一同',conf:.99},
+ ].sort((a,b)=>a.conf-b.conf);
+ S.csvStep=3;S.csvEditId=0;render();}
+/* ============ 外字検索（親字 → 子の異体字） ============ */
+const G={open:false,step:1,parent:null,pick:null,target:null,q:''};
+function openGaiji(kind,idx,field){
+ G.open=true;G.step=1;G.parent=null;G.pick=null;G.q='';
+ G.target={kind,idx,field};
+ renderModal();
+}
+function closeGaiji(){G.open=false;document.getElementById('modal').classList.remove('on');}
+function gSearch(v){
+ G.q=v;
+ const hit=GAIJI_TREE[v.trim().slice(-1)];
+ if(hit){G.parent=v.trim().slice(-1);G.step=2;}
+ renderModal();
+}
+function pickParent(p){G.parent=p;G.step=2;G.pick=null;renderModal();}
+function pickChild(mj){
+ const c=GAIJI_TREE[G.parent].find(x=>x.mj===mj);
+ G.pick=c;G.step=3;renderModal();
+}
+function insertGaiji(){
+ const l=cur(),t=G.target,c=G.pick;
+ const ch=c.c||('〓');
+ if(t.kind==='n')l.names[t.idx][t.field]=(l.names[t.idx][t.field]||'')+ch;
+ else l.corps[t.idx][t.field]=(l.corps[t.idx][t.field]||'')+ch;
+ closeGaiji();render();
+}
+function renderModal(){
+ const m=document.getElementById('modal');
+ if(!G.open){m.classList.remove('on');return;}
+ m.classList.add('on');
+ const steps=['親字を指定','字形を選ぶ','確認して挿入'];
+ const head=`<div class="mhead">変換で出ない字を探す<span class="spacer"></span>
+  <button class="btn btn-outline btn-sm" onclick="closeGaiji()">閉じる</button></div>`;
+ const bar=`<div class="gsteps">${steps.map((t,i)=>`<div class="${G.step===i+1?'on':''}">${i+1}. ${t}</div>`).join('')}</div>`;
+ let body='';
+
+ if(G.step===1){
+  body=`${bar}
+  <div class="alert alert-info">名字の「たかはし」の「たか」のように、<b>変換で出せる親字</b>を入れてください。
+   そこにぶら下がる異体字の一覧が出ます。</div>
+  <div class="form-group"><label>親字（変換で出る字）</label>
+   <input class="form-control" style="max-width:220px;font-size:20px" placeholder="例：高"
+    value="${esc(G.q)}" oninput="gSearch(this.value)">
+   <div class="help">MJ縮退マップを逆に引いて、この字から派生する異体字を一覧します。</div></div>
+  <div class="form-group"><label>よく使われる親字</label>
+   <div class="parents">${PARENT_SAMPLES.map(p=>`<button class="pbtn" onclick="pickParent('${p}')">${p}</button>`).join('')}</div></div>
+  <div class="alert alert-warn" style="margin-bottom:0">親字そのものが変換で出ない場合は、部首と画数から探します。
+   <button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="alert('部首・画数検索（モック）')">部首・画数で探す</button></div>`;
+ }
+
+ if(G.step===2){
+  const list=GAIJI_TREE[G.parent]||[];
+  const needGen=list.filter(x=>!x.in).length;
+  body=`${bar}
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+   <div class="cmp"><div class="box"><div class="lb">親字</div><div class="g">${G.parent}</div></div></div>
+   <div><div class="small muted">この親字にぶら下がる字形</div>
+    <b>${list.length} 件</b>
+    <span class="small muted">　うち書体に収録済み ${list.length-needGen} 件／要生成 ${needGen} 件</span></div></div>
+  <div class="ggrid">${list.map(x=>`<div class="gcard${G.pick&&G.pick.mj===x.mj?' on':''}" onclick="pickChild('${x.mj}')">
+   ${x.ph?`<div class="ph">IPAmj<br>字形</div>`:`<div class="gg">${x.c}</div>`}
+   <div class="gm">${x.mj}</div>
+   <div class="gs">${x.in?'<span class="badge b-success">収録済み</span>':'<span class="badge b-warning">要生成</span>'}</div>
+   <div class="gn">${esc(x.n)}</div></div>`).join('')}</div>
+  <div class="help" style="margin-top:10px">この画面の字形はIPAmj明朝から書き出した画像です。
+   細かな違いは拡大して確認してください。MJ番号が違えば別の字として扱われます。</div>`;
+ }
+
+ if(G.step===3){
+  const p=G.pick;
+  body=`${bar}
+  <div class="cmp" style="margin-bottom:14px">
+   <div class="box"><div class="lb">親字</div><div class="g">${G.parent}</div></div>
+   <span class="arw">→</span>
+   <div class="box" style="border-color:var(--primary)"><div class="lb">選んだ字形（IPAmj明朝）</div>
+    ${p.ph?'<div class="ph" style="margin:6px 0">IPAmj<br>字形</div>':`<div class="g">${p.c}</div>`}</div>
+   <span class="arw">→</span>
+   <div class="box" style="background:${p.in?'#f6fff8':'#fffdf3'}">
+    <div class="lb">名札に印字される字（楷書）</div>
+    ${p.in?`<div class="g kai">${p.c}</div>`:'<div class="ph" style="margin:6px 0">AI生成</div>'}</div>
+  </div>
+  <table class="table" style="margin-bottom:14px"><tbody>
+   <tr><th style="width:150px">MJ文字図形名</th><td style="font-family:monospace">${p.mj}</td></tr>
+   <tr><th>字形の特徴</th><td>${esc(p.n)}</td></tr>
+   <tr><th>楷書MCBK1</th><td>${p.in?'<span class="badge b-success">収録済み</span>　そのまま印字できます'
+     :'<span class="badge b-warning">未収録</span>　IPAmjの字形を参照して楷書で生成します'}</td></tr>
+   <tr><th>外字マスタ</th><td>${p.in?'登録不要':'承認後、MJ番号をキーに登録され、次回以降は再利用されます'}</td></tr>
+  </tbody></table>
+  ${p.in?'':`<div class="alert alert-warn">生成した字形は<b>担当者の承認</b>を経て確定します。
+   自動では確定しません。周りの文字と並べて違和感がないか確認してください。</div>`}`;
+ }
+
+ const foot=`<div class="mfoot">
+  ${G.step>1?`<button class="btn btn-outline" onclick="G.step=${G.step-1};renderModal()">戻る</button>`:''}
+  <span class="spacer"></span>
+  ${G.step===3?(G.pick.in
+    ?`<button class="btn btn-primary" onclick="insertGaiji()">この字を挿入する</button>`
+    :`<button class="btn btn-primary" onclick="insertGaiji()">承認して挿入する</button>`):''}
+ </div>`;
+ document.getElementById('mbox').innerHTML=head+`<div class="mbody">${body}</div>`+foot;
+}
+
+/* ============ ファイル入出力（実際に動きます） ============ */
+function download(name,text,mime){
+ const bom=mime.startsWith('text/csv')?'\uFEFF':'';   // Excel で文字化けさせない
+ const url=URL.createObjectURL(new Blob([bom+text],{type:mime+';charset=utf-8'}));
+ const a=document.createElement('a');
+ a.href=url; a.download=name; document.body.appendChild(a); a.click();
+ setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},400);
+}
+const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+const toCsv=rows=>rows.map(r=>r.map(q).join(',')).join('\r\n');
+
+/* 名札フォーマット別のテンプレートCSV */
+function templateCsv(fid){
+ const M=fmt(fid);
+ const head=['種別（個人/法人）','会社種別','会社・団体名','肩書','お名前1','お名前2','お名前3','備考'];
+ const rows=[head,
+  ['個人','','','','山田 太郎','','','姓と名のあいだは空白で区切ってください'],
+  ['個人','','','','佐藤 一郎','佐藤 花子','','連名は列を分けます'],
+  ['法人','株式会社','サンプル商事','代表取締役','青木 一郎','','',''],
+  ['法人','（記載なし）','あおぞら工業','取締役','山本 花子','','','']];
+ download(`名札テンプレート_${M.name}.csv`,toCsv(rows),'text/csv');
+}
+
+/* RFC4180 風の簡易パーサ */
+function parseCsvText(t){
+ t=t.replace(/^\uFEFF/,'');
+ const rows=[];let row=[],cell='',inQ=false;
+ for(let i=0;i<t.length;i++){
+  const c=t[i];
+  if(inQ){ if(c==='"'){ if(t[i+1]==='"'){cell+='"';i++;} else inQ=false; } else cell+=c; }
+  else if(c==='"')inQ=true;
+  else if(c===','){row.push(cell);cell='';}
+  else if(c==='\n'){row.push(cell);cell='';rows.push(row);row=[];}
+  else if(c!=='\r')cell+=c;
+ }
+ if(cell||row.length){row.push(cell);rows.push(row);}
+ return rows.filter(r=>r.some(x=>x.trim()));
+}
+
+/* アップロードされたCSVを取り込む */
+function onCsvFile(input){
+ const f=input.files&&input.files[0];
+ if(!f)return;
+ const r=new FileReader();
+ r.onload=()=>{
+  try{
+   const rows=parseCsvText(String(r.result));
+   const body=rows.slice(1);
+   if(!body.length){alert('データ行がありません');return;}
+   S.csvRows=body.map(c=>{
+    const kind=(c[0]||'').includes('法')?'corporate':'individual';
+    const co=(c[2]||'').trim(), ti=(c[3]||'').trim();
+    const names=[c[4],c[5],c[6]].map(x=>(x||'').trim()).filter(Boolean);
+    return {raw:c.filter(Boolean).join(' ').trim(),kind,co,ti,
+            na:names[0]||'',names,conf:co&&!ti?0.74:0.93};
+   }).filter(x=>x.na||x.co);
+   S.csvRows.sort((a,b)=>a.conf-b.conf);
+   S.csvStep=3;S.csvEditId=0;render();
+  }catch(e){alert('読み込めませんでした：'+e.message);}
+ };
+ r.readAsText(f,'UTF-8');
+}
+
+/* 名札リストのCSV */
+function labelListCsv(fid){
+ const f=fn(fid);
+ const rows=[['葬家','名札の内容','フォーマット','商品','由来','状態','カウント']];
+ LABELS.filter(l=>l.funeralId===fid).forEach(l=>rows.push([
+  f?f.name:'',composeLabel(l),fmt(l.formatId).name,l.itemName,
+  SRC[l.src][0],l.status==='fixed'?'確定':'下書き',
+  countable(l)?'対象':(isExcluded(l)?'対象外（定型語）':'—')]));
+ download(`名札リスト_${f?f.name:''}.csv`,toCsv(rows),'text/csv');
+}
+
+/* 利用状況の明細CSV */
+function usageCsv(){
+ const rows=[['日付','葬家','名札の内容','フォーマット','由来','カウント']];
+ LABELS.filter(l=>l.status==='fixed').forEach(l=>{
+  const f=fn(l.funeralId);
+  rows.push(['2026-08-25',f?f.name:'（個別作成）',composeLabel(l),
+   fmt(l.formatId).name,SRC[l.src][0],countable(l)?1:0]);
+ });
+ download('名札生成数_明細_2026-08.csv',toCsv(rows),'text/csv');
+}
+
+/* 実寸の印刷ビュー。新しいタブで開き、印刷ダイアログまで出す（R7の到達点）。
+   用紙サイズは @page で名札の実寸を指定するので、ブラウザのPDF保存でも実寸になる。 */
+function openPrintView(fid,formatId){
+ const M=fmt(formatId);
+ const ls=LABELS.filter(l=>l.funeralId===fid&&l.status==='fixed'&&l.formatId===formatId);
+ if(!ls.length){alert('確定済みの名札がありません');return;}
+ const pages=ls.map(l=>`<div class="pg">${fudaHtml(l,0,false,null,{unit:'mm',plain:1})}</div>`).join('');
+ const html=`<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">
+<title>${esc(M.name)}（${ls.length}枚）</title>
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" rel="stylesheet">
+<style>
+@page{size:${M.W}mm ${M.H}mm;margin:0}
+html,body{margin:0;padding:0;background:#fff}
+.pg{width:${M.W}mm;height:${M.H}mm;position:relative;overflow:hidden;
+ page-break-after:always;break-after:page;background:#fff}
+.pg:last-child{page-break-after:auto;break-after:auto}
+.fuda{display:flex;flex-direction:column;align-items:center;position:relative;
+ width:100%;height:100%;color:#000;
+ font-family:"Yuji Syuku","Yu Mincho","Hiragino Mincho ProN",serif}
+.fuda-hd{display:flex;color:#000}
+.fuda-body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;flex:1}
+.fuda-row{display:flex;flex-direction:row-reverse;align-items:flex-start;justify-content:center}
+.fuda-col{display:flex;flex-direction:column;align-items:center}
+.fuda-ft{position:absolute;left:0;width:100%;text-align:center;color:#000}
+.hint{position:fixed;top:8px;left:8px;background:#fff3cd;border:1px solid #ffeeba;
+ color:#856404;font:13px/1.6 sans-serif;padding:8px 12px;border-radius:3px;max-width:60ch;z-index:9}
+@media print{.hint{display:none}}
+</style></head><body>
+<div class="hint"><b>印刷設定の確認</b><br>
+用紙サイズ：${M.W}×${M.H}mm ／ 余白：なし ／ 倍率：100%（「ページに合わせる」にしないでください）<br>
+背景のグラフィックは不要です。木目は紙の柄なので印刷しません。</div>
+${pages}
+<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},600);});<\/script>
+</body></html>`;
+ const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+ const w=window.open(url,'_blank');
+ if(!w)alert('ポップアップがブロックされました。許可してから再度お試しください。');
+}
+
+/* ============ 名札マスタ設定の操作 ============ */
+function setCap(k,v){
+ fmt(S.mfid).cap[k]=+v;
+ refreshMaster();
+}
+function setLay(k,v){
+ fmt(S.mfid)[k]=(k==='valign')?v:+v;
+ render();
+}
+function refreshMaster(){
+ /* スライダーのフォーカスを保つため、プレビューと数値だけ差し替える */
+ const F=fmt(S.mfid);
+ document.querySelectorAll('.slrow').forEach(row=>{
+  const inp=row.querySelector('input[type=range]');
+  if(!inp||!inp.getAttribute('oninput').startsWith('setCap'))return;
+  const k=inp.getAttribute('oninput').match(/setCap\('(\w+)'/)[1];
+  row.querySelector('.mm').textContent=F.cap[k]+' mm';
+  row.querySelector('.val').textContent=(F.cap[k]/0.352778).toFixed(0)+' pt';
+ });
+ const box=document.querySelector('.card-body[style*="fbfaf7"] > div');
+ if(box)render();
+}
+function resetFmt(){
+ FORMATS[S.mfid]=JSON.parse(JSON.stringify(FORMAT_DEFAULTS[S.mfid]));
+ render();
+}
+function exportFmt(){
+ const F=fmt(S.mfid), pt=v=>(v/0.352778).toFixed(0);
+ const t=[`名札マスタ 既定値　${F.name}（${F.call} / ${F.W}×${F.H}mm）`,'',
+  '■ 用紙と余白',
+  `  上の余白      ${F.top} mm`,`  下の余白      ${F.bottom} mm`,`  左右の余白    ${F.side} mm`,'',
+  '■ 文字の上限サイズ',
+  ...[['na','個人名'],['cn','名前（法人）'],['co','会社・団体名'],['ti','肩書'],['rel','続柄'],['hd','上部の文言']]
+    .map(([k,l])=>`  ${l}${'　'.repeat(Math.max(0,7-l.length))}  ${String(F.cap[k]).padStart(3)} mm （${pt(F.cap[k])} pt）`),
+  '','■ 組み方',
+  `  字送り        ${F.lh.toFixed(2)} 倍`,
+  `  字幅          ${F.sx.toFixed(2)} 倍`,
+  `  縦の位置      ${{top:'上に詰める',middle:'天地中央',optical:'やや上'}[F.valign]}`,
+ ].join('\n');
+ download(`名札マスタ_${F.name}.txt`,t,'text/plain');
+}
+
+function commitCsv(){
+ S.csvRows.forEach(r=>LABELS.push(mkLabel({funeralId:S.funeralId,formatId:'F1',itemName:'一括取り込み',
+  src:'csv',status:'fixed',kind:r.kind,
+  names:[{relation:'',name:r.na,isCouple:false}],
+  corps:[{type:'（記載なし）',company:r.co,title:r.ti,name:r.na}]})));
+ S.csvRows=[];S.csvStep=1;go('s2');}
+
+render();
+</script>
