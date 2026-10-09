@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>お供えを贈る｜追悼ページ（サン・ライフ様 仕様モック）</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link href="assets/app.css" rel="stylesheet">
+<link href="assets/fuda.css" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+  <div class="mhead">
+    <span class="mser" style="font-size:17px">itowa</span>
+    <span class="nm" id="hName">故　平塚 太郎　様</span>
+    <a class="lk" href="index.html">モック一覧</a>
+  </div>
+  <div class="stepper" id="stepper"></div>
+  <div class="content" id="content"></div>
+  <div class="botbar" id="botbar"></div>
+</div>
+
+<script src="assets/fuda.js"></script>
+<script src="assets/data.js"></script>
+<script>
+const $=id=>document.getElementById(id), esc=FUDA.esc;
+const yen=n=>'¥'+n.toLocaleString('ja-JP');
+const QUICK=['子供一同','孫一同','親族一同','兄弟一同','友人一同','有志一同'];
+const CORP_TYPES=['株式会社','有限会社','合同会社','医療法人','一般社団法人','（記載なし）'];
+const TITLES=['代表取締役社長','代表取締役','会長','社長','取締役','代表','店長'];
+const MAXN=12, MAXC=2;   /* ヒアリングシートのご回答：個人は4段12名位まで／法人は2件まで */
+
+let step=1;
+let cart=[];      /* {uid, itemId, qty, label} */
+let uid=0;
+
+function newLabel(fmt){
+  return {fmt:fmt||'seika', adj:{}, kind:'ind', lead:'', withRel:false, perRow:0,
+          names:[{na:'',rel:''}], corps:[{co:'',ti:'',na:''}]};
+}
+function filled(l){
+  if(l.kind==='ind') return (l.names||[]).some(n=>(n.na||'').trim());
+  return (l.corps||[]).some(c=>(c.na||'').trim()||(c.co||'').trim());
+}
+
+/* ---------- 枠 ---------- */
+function drawStepper(){
+  const names=['商品','名札','確認'];
+  $('stepper').innerHTML=names.map((t,i)=>
+    `<div class="st ${step===i+1?'on':''}"><div class="n">${i+1}</div>${t}</div>`).join('');
+}
+function draw(){
+  drawStepper();
+  if(step===1) stepItems();
+  else if(step===2) stepLabel();
+  else stepConfirm();
+  drawBar();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+function drawBar(){
+  const b=$('botbar');
+  if(step===1){
+    const n=cart.length;
+    b.innerHTML=`<span class="hint">${n?`${n}点を選択中`:'商品をお選びください'}</span>
+      <span style="flex:1"></span>
+      <button class="btn primary" ${n?'':'disabled'} onclick="go(2)">お名札の入力へ</button>`;
+  }else if(step===2){
+    const ok=cart.every(c=>filled(c.label));
+    b.innerHTML=`<button class="btn" onclick="go(1)">商品に戻る</button>
+      <span style="flex:1"></span>
+      <button class="btn primary" ${ok?'':'disabled'} onclick="go(3)">内容の確認へ</button>`;
+  }else{
+    b.innerHTML=`<button class="btn" onclick="go(2)">お名札に戻る</button>
+      <span style="flex:1"></span>
+      <button class="btn primary" onclick="alert('モックのため、ここから先には進みません。')">お支払いへ</button>`;
+  }
+}
+function go(s){ step=s; draw(); }
+
+/* ---------- 1. 商品 ---------- */
+function stepItems(){
+  const items=DATA.ITEMS.filter(i=>i.fmt);
+  $('content').innerHTML=`
+    <div class="sec-lead mser">お供えを選ぶ</div>
+    <p class="hint" style="margin-bottom:12px">商品ごとにお名札の形が決まっています。選ぶとお名札の入力欄が出ます。</p>
+    <div class="prod">${items.map(i=>{
+      const fm=FUDA.FORMATS[i.fmt], n=cart.filter(c=>c.itemId===i.id).length;
+      return `<div class="pcard ${n?'on':''}" onclick="addItem('${i.id}')">
+        <div class="nm">${esc(i.name)}</div>
+        <div class="mt">${fm.name}（${fm.call}mm）</div>
+        <div class="pr mser">${yen(i.price)}</div>
+        ${n?`<div class="mt" style="color:#2a6040;margin-top:6px">${n}点を選択中</div>`:''}
+      </div>`;}).join('')}</div>
+    ${cart.length?`<div class="card" style="margin-top:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">選択中のお供え</div>
+      ${cart.map((c,i)=>{const it=DATA.ITEM(c.itemId);
+        return `<div class="rowx" style="grid-template-columns:minmax(0,1fr) auto auto">
+          <div style="font-size:13px">${esc(it.name)}<span class="hint">　${FUDA.FORMATS[c.label.fmt].name}</span></div>
+          <div class="mser">${yen(it.price)}</div>
+          <button class="mini" onclick="rmItem(${i})">−</button></div>`;}).join('')}
+      <div style="display:flex;border-top:1px solid var(--line);padding-top:9px;margin-top:4px">
+        <span style="font-size:13px">合計</span><span style="flex:1"></span>
+        <span class="mser" style="font-size:16px">${yen(cart.reduce((a,c)=>a+DATA.ITEM(c.itemId).price,0))}</span></div>
+    </div>`:''}`;
+}
+function addItem(id){
+  const it=DATA.ITEM(id);
+  cart.push({uid:++uid,itemId:id,qty:1,label:newLabel(it.fmt)});
+  draw();
+}
+function rmItem(i){ cart.splice(i,1); draw(); }
+
+/* ---------- 2. 名札 ---------- */
+function stepLabel(){
+  $('content').innerHTML=`
+    <div class="sec-lead mser">お名札の入力</div>
+    <p class="hint" style="margin-bottom:12px">お供えごとにご記入ください。入力すると右（スマートフォンでは上）に刷り上がりが出ます。</p>
+    ${cart.map((c,ci)=>card(c,ci)).join('')}
+    <div class="note-s">
+      <i class="fas fa-circle-info" style="color:var(--gold)"></i>
+      こちらはお名前の並びを<b>ご確認いただくための表示</b>です。実際のお名札は、
+      文字の配置やバランスを葬儀社にて調整のうえお作りいたします。
+    </div>`;
+}
+function card(c,ci){
+  const it=DATA.ITEM(c.itemId), fm=FUDA.FORMATS[c.label.fmt];
+  const ok=filled(c.label);
+  return `<div class="card">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
+      <div style="min-width:0">
+        <div style="font-size:14px;font-weight:600;line-height:1.35">${esc(it.name)}</div>
+        <div class="hint">${fm.name}（たて${fm.H} × よこ${fm.W}mm）／ ${yen(it.price)}</div>
+      </div>
+      <span class="badge" style="color:${ok?'#15803d':'#b91c1c'};background:${ok?'#dcfce7':'#fee2e2'}">${ok?'入力済':'未入力'}</span>
+    </div>
+    <div class="lbl2">
+      <div class="pv"><div><div class="cap">刷り上がり</div><div id="pv-${ci}">${FUDA.html(c.label,230)}</div></div></div>
+      <div>${lblForm(c,ci)}</div>
+    </div>
+  </div>`;
+}
+function lblForm(c,ci){
+  const L=c.label;
+  let h=`<div class="fld"><label>ご注文者の区分</label>
+    <div class="toggle">
+      <button class="${L.kind==='ind'?'on':''}" onclick="sKind(${ci},'ind')">個人・連名</button>
+      <button class="${L.kind==='corp'?'on':''}" onclick="sKind(${ci},'corp')">会社・団体</button>
+    </div></div>`;
+  if(L.kind==='ind'){
+    h+=`<div class="fld"><label>頭に置く語（任意）</label>
+      <div class="quick">${['','孫','子','兄弟','親族','友人'].map(v=>
+        `<button onclick="sLead(${ci},'${v}')" style="${L.lead===v?'border-color:var(--primary);color:var(--primary)':''}">${v||'なし'}</button>`).join('')}</div></div>`;
+    h+=`<div class="fld"><label>続柄を付ける</label>
+      <div class="toggle">
+        <button class="${!L.withRel?'on':''}" onclick="sRel(${ci},false)">付けない</button>
+        <button class="${L.withRel?'on':''}" onclick="sRel(${ci},true)">付ける（長男・長女など）</button>
+      </div></div>`;
+    h+=`<div class="fld"><label>お名前 <span class="req">*</span>　<span class="hint">姓と名のあいだはスペースで区切ってください</span></label>`;
+    h+=L.names.map((n,i)=>`<div class="rowx">
+      <span class="ix">${i+1}</span>
+      <input type="text" id="na-${ci}-${i}" value="${esc(n.na)}" placeholder="平塚 太郎"
+        oninput="sName(${ci},${i},'na',this.value)">
+      <input type="text" value="${esc(n.rel)}" placeholder="続柄" ${L.withRel?'':'disabled'}
+        oninput="sName(${ci},${i},'rel',this.value)">
+      <button class="mini" onclick="rmName(${ci},${i})">−</button></div>`).join('');
+    h+=`<div style="display:flex;gap:7px;margin-top:4px">
+      <button class="btn" style="padding:7px 13px;font-size:13px" onclick="addName(${ci})">お名前を追加</button></div>
+      <div class="quick" style="margin-top:8px">${QUICK.map(q=>
+        `<button onclick="setQuick(${ci},'${q}')">${q}</button>`).join('')}</div>
+      <p class="hint" style="margin-top:7px">連名は ${MAXN} 名まで。${MAXN}名を超える場合は葬儀社へご相談ください。</p></div>`;
+  }else{
+    h+=L.corps.map((p,i)=>`<div class="fld" style="border:1px solid #efe9dc;border-radius:10px;padding:11px 12px;background:#fbf9f5">
+      <div style="display:flex;align-items:center;margin-bottom:7px">
+        <span class="hint">${i+1}件目</span><span style="flex:1"></span>
+        ${L.corps.length>1?`<button class="mini" onclick="rmCorp(${ci},${i})">−</button>`:''}</div>
+      <label>会社・団体名 <span class="req">*</span></label>
+      <input type="text" value="${esc(p.co)}" placeholder="株式会社平塚商会" oninput="sCorp(${ci},${i},'co',this.value)">
+      <div class="quick" style="margin:6px 0 10px">${CORP_TYPES.map(t=>
+        `<button onclick="preType(${ci},${i},'${t}')">${t}</button>`).join('')}</div>
+      <label>肩書</label>
+      <input type="text" value="${esc(p.ti)}" placeholder="代表取締役" oninput="sCorp(${ci},${i},'ti',this.value)">
+      <div class="quick" style="margin:6px 0 10px">${TITLES.map(t=>
+        `<button onclick="setTitle(${ci},${i},'${t}')">${t}</button>`).join('')}</div>
+      <label>お名前 <span class="req">*</span></label>
+      <input type="text" value="${esc(p.na)}" placeholder="平塚 太郎 ／ 社員一同" oninput="sCorp(${ci},${i},'na',this.value)">
+    </div>`).join('');
+    if(L.corps.length<MAXC)
+      h+=`<button class="btn" style="padding:7px 13px;font-size:13px" onclick="addCorp(${ci})">会社・団体を追加</button>
+          <p class="hint" style="margin-top:7px">1枚のお名札に載せられる会社・団体は ${MAXC} 件までです。</p>`;
+  }
+  h+=`<div class="fld" style="margin-top:14px;padding-top:12px;border-top:1px dashed #e3ddd0">
+    <label>見本から読み込む（モック確認用）</label>
+    <select onchange="loadPat(${ci},this.value);this.value=''">
+      <option value="">お預かりしたパターン表 70種から選ぶ…</option>
+      ${DATA.PATTERNS.map(p=>`<option value="${p.no}">#${String(p.no).padStart(3,'0')}　${esc(FUDA.summary(p.f)).slice(0,28)}</option>`).join('')}
+    </select>
+    <p class="hint" style="margin-top:5px">実際のご注文画面にはこの欄はありません。入力の確認用です。</p></div>`;
+  return h;
+}
+function refresh(ci){
+  const el=$('pv-'+ci); if(el) el.innerHTML=FUDA.html(cart[ci].label,230);
+}
+let tm=null;
+function soft(ci){ clearTimeout(tm); tm=setTimeout(()=>{refresh(ci);drawBar();},140); }
+function sKind(ci,k){ cart[ci].label.kind=k; draw(); }
+function sLead(ci,v){ cart[ci].label.lead=v; draw(); }
+function sRel(ci,v){ cart[ci].label.withRel=v; draw(); }
+function sName(ci,i,k,v){ cart[ci].label.names[i][k]=v; soft(ci); }
+function sCorp(ci,i,k,v){ cart[ci].label.corps[i][k]=v; soft(ci); }
+function addName(ci){ const L=cart[ci].label;
+  if(L.names.length<MAXN){ L.names.push({na:'',rel:''}); draw();
+    setTimeout(()=>{const e=$(`na-${ci}-${L.names.length-1}`); if(e)e.focus();},0);} }
+function rmName(ci,i){ const L=cart[ci].label; if(L.names.length>1){L.names.splice(i,1); draw();} }
+function addCorp(ci){ const L=cart[ci].label; if(L.corps.length<MAXC){L.corps.push({co:'',ti:'',na:''}); draw();} }
+function rmCorp(ci,i){ const L=cart[ci].label; if(L.corps.length>1){L.corps.splice(i,1); draw();} }
+function setQuick(ci,q){ const L=cart[ci].label;
+  const i=L.names.findIndex(n=>!(n.na||'').trim());
+  if(i>=0) L.names[i].na=q; else if(L.names.length<MAXN) L.names.push({na:q,rel:''});
+  draw(); }
+function preType(ci,i,t){ const p=cart[ci].label.corps[i];
+  const base=(p.co||'').replace(/^(株式会社|有限会社|合同会社|医療法人|一般社団法人)/,'').trim();
+  p.co=(t==='（記載なし）'?base:t+base); draw(); }
+function setTitle(ci,i,t){ cart[ci].label.corps[i].ti=t; draw(); }
+function loadPat(ci,no){
+  if(!no) return;
+  const p=DATA.PATTERNS.find(x=>String(x.no)===String(no)); if(!p) return;
+  const fmt=cart[ci].label.fmt;
+  cart[ci].label=Object.assign(newLabel(fmt), JSON.parse(JSON.stringify(p.f)), {fmt,adj:{}});
+  if(!cart[ci].label.names.length) cart[ci].label.names=[{na:'',rel:''}];
+  if(!cart[ci].label.corps.length) cart[ci].label.corps=[{co:'',ti:'',na:''}];
+  draw();
+}
+
+/* ---------- 3. 確認 ---------- */
+function stepConfirm(){
+  $('content').innerHTML=`
+    <div class="sec-lead mser">ご入力内容の確認</div>
+    <p class="hint" style="margin-bottom:12px">この並びでお名札をお作りします。お間違いがないかご確認ください。</p>
+    ${cart.map((c,ci)=>{
+      const it=DATA.ITEM(c.itemId), fm=FUDA.FORMATS[c.label.fmt];
+      const g=FUDA.geom(c.label), [vk,vm]=FUDA.verdict(g);
+      return `<div class="card">
+        <div class="lbl2">
+          <div class="pv"><div><div class="cap">${fm.name}</div>${FUDA.html(c.label,250)}</div></div>
+          <div>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">${esc(it.name)}</div>
+            <div class="hint" style="margin-bottom:10px">${fm.name}（たて${fm.H} × よこ${fm.W}mm）／ ${yen(it.price)}</div>
+            <div class="fld"><label>お名札</label>
+              <div class="mser" style="font-size:15px;line-height:1.7">${esc(FUDA.summary(c.label))}</div></div>
+            <div class="hint">文字の大きさ ${g.Kmain.toFixed(0)}mm ／ ${g.mc}列 ${g.nR}段
+              　<span class="fv ${vk}">${esc(vm)}</span></div>
+            <button class="btn" style="margin-top:10px;padding:7px 13px;font-size:13px"
+              onclick="go(2)">この内容を直す</button>
+          </div>
+        </div></div>`;}).join('')}
+    <div class="card">
+      <div style="display:flex"><span style="font-size:14px">ご注文金額</span><span style="flex:1"></span>
+      <span class="mser" style="font-size:18px">${yen(cart.reduce((a,c)=>a+DATA.ITEM(c.itemId).price,0))}</span></div>
+    </div>`;
+}
+
+/* 初期状態：生花札を1点、見本#003 を入れておく */
+(function(){
+  const it=DATA.ITEMS.find(i=>i.fmt==='seika');
+  cart.push({uid:++uid,itemId:it.id,qty:1,label:newLabel('seika')});
+  const p=DATA.PATTERNS.find(x=>x.no===3);
+  cart[0].label=Object.assign(newLabel('seika'), JSON.parse(JSON.stringify(p.f)), {fmt:'seika',adj:{}});
+  if(!cart[0].label.corps.length) cart[0].label.corps=[{co:'',ti:'',na:''}];
+  draw();
+})();
+</script>
+</body>
+</html>

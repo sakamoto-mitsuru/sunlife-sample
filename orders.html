@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>注文管理｜itowa（サン・ライフ様 仕様モック）</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link href="assets/biz.css" rel="stylesheet">
+<link href="assets/fuda.css" rel="stylesheet">
+</head>
+<body>
+<div class="shell">
+  <div id="sidebar"></div>
+  <div class="main">
+    <div class="topbar">
+      <span class="title">注文管理</span>
+      <span class="spacer"></span>
+      <span class="note">サンシーガル厚木本部</span>
+    </div>
+    <div class="content">
+      <div class="crumb">ホーム ／ 注文管理</div>
+      <div class="page-h"><h1>注文管理</h1></div>
+      <p class="page-lead">Web・電話・FAX のすべての注文がここに集まります。名札はこの一覧から札種ごとにまとめて出力できます。</p>
+
+      <div class="banner">
+        <b>このモックについて</b>　名札の寸法と組み方は、お預かりしたヒアリングシートのご回答と名札パターン表70種の実測から起こしています。
+        一覧の70件は、そのパターン表の70種をそのまま注文データにしたものです。保存はされません。
+      </div>
+
+      <div class="card2">
+        <div class="row" style="margin-bottom:12px">
+          <div style="min-width:150px"><label class="fl">葬家</label><select id="fFun"></select></div>
+          <div style="min-width:140px"><label class="fl">札の種類</label><select id="fFmt"></select></div>
+          <div style="min-width:120px"><label class="fl">受け口</label><select id="fRoute"></select></div>
+          <div style="min-width:120px"><label class="fl">状態</label><select id="fSt"></select></div>
+          <div style="flex:1 1 180px"><label class="fl">名義で探す</label><input type="text" id="fQ" placeholder="平塚、株式会社 など"></div>
+          <div><label class="fl">&nbsp;</label><button class="btn" onclick="clearF()">条件をクリア</button></div>
+        </div>
+        <div class="row" style="border-top:1px solid var(--line);padding-top:12px">
+          <button class="btn sm" onclick="selAll(true)">表示中をすべて選択</button>
+          <button class="btn sm" onclick="selAll(false)">選択を解除</button>
+          <span class="note" id="selInfo">—</span>
+          <span class="spacer"></span>
+          <button class="btn primary" id="pdfBtn" onclick="doPdf()">
+            <i class="fas fa-file-pdf"></i> 選択した名札をPDFで出力
+          </button>
+        </div>
+        <p class="note" style="margin-top:8px">
+          PDFは<b>札の種類ごとに分かれて</b>出ます（生花札／芳名札／スロープ・枕札）。用紙を入れ替えながらまとめて刷れます。
+          ページの大きさは札の実寸です。
+        </p>
+        <div id="pdfLog"></div>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <div class="tblwrap">
+            <table>
+              <thead><tr>
+                <th style="width:34px"></th><th>注文番号</th><th>葬家</th><th>商品</th>
+                <th>札</th><th>区分</th><th>名義</th><th>受け口</th><th>状態</th><th></th>
+              </tr></thead>
+              <tbody id="tb"></tbody>
+            </table>
+          </div>
+          <p class="note" id="cnt" style="margin-top:10px"></p>
+        </div>
+        <aside>
+          <div class="card2">
+            <h2>名札のプレビュー</h2>
+            <p class="lead" id="dTitle">一覧の行を選ぶと、その名札がここに出ます。</p>
+            <div style="display:flex;justify-content:center;padding:6px 0 14px" id="dFuda"></div>
+            <div id="dMetrics"></div>
+            <div class="row" style="margin-top:12px">
+              <button class="btn sm" id="dPdf" onclick="doPdfOne()" disabled><i class="fas fa-file-pdf"></i> この1枚をPDF</button>
+              <a class="btn sm" id="dEdit" href="name-tag.html" style="text-decoration:none">名札作成で開く</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/vendor/html2canvas.min.js"></script>
+<script src="assets/vendor/jspdf.umd.min.js"></script>
+<script src="assets/fuda.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/nav.js"></script>
+<script src="assets/pdf.js"></script>
+<script>
+NAV.mount('orders');
+const $=id=>document.getElementById(id);
+const esc=FUDA.esc;
+let sel=new Set(), cur=null;
+
+/* ---------- 絞り込み ---------- */
+function opts(el,list,all){ el.innerHTML=`<option value="">${all}</option>`+
+  list.map(o=>`<option value="${o.v}">${o.l}</option>`).join(''); }
+opts($('fFun'), DATA.FUNERALS.map(f=>({v:f.id,l:f.name+'（'+f.hall+'）'})), 'すべての葬家');
+opts($('fFmt'), Object.values(FUDA.FORMATS).map(f=>({v:f.key,l:f.name+'　'+f.call})), 'すべての札');
+opts($('fRoute'), DATA.ROUTES.map(r=>({v:r.k,l:r.l})), 'すべての受け口');
+opts($('fSt'), [{v:'todo',l:'未出力'},{v:'done',l:'出力済'}], 'すべての状態');
+['fFun','fFmt','fRoute','fSt'].forEach(id=>$(id).onchange=draw);
+$('fQ').oninput=draw;
+function clearF(){ ['fFun','fFmt','fRoute','fSt'].forEach(id=>$(id).value=''); $('fQ').value=''; draw(); }
+
+function rows(){
+  const fu=$('fFun').value, fm=$('fFmt').value, rt=$('fRoute').value,
+        st=$('fSt').value, q=($('fQ').value||'').trim();
+  return DATA.ORDERS.filter(o=>
+    (!fu||o.funeralId===fu) && (!fm||o.label.fmt===fm) && (!rt||o.route===rt) &&
+    (!st||o.status===st) && (!q||FUDA.summary(o.label).includes(q)));
+}
+
+/* ---------- 一覧 ---------- */
+function draw(){
+  const list=rows();
+  $('tb').innerHTML=list.map(o=>{
+    const f=DATA.FUNERALS.find(x=>x.id===o.funeralId), it=DATA.ITEM(o.itemId);
+    const fm=FUDA.FORMATS[o.label.fmt];
+    const [vk,vm]=FUDA.verdict(FUDA.geom(o.label));
+    return `<tr onclick="pick('${o.id}')" style="cursor:pointer"${cur===o.id?' style="background:#eff6ff;cursor:pointer"':''}>
+      <td onclick="event.stopPropagation()"><input type="checkbox" ${sel.has(o.id)?'checked':''} onchange="toggle('${o.id}',this.checked)"></td>
+      <td class="mono">${o.id}</td>
+      <td class="nw">${esc(f.name)}</td>
+      <td class="nw">${esc(it.name)}${o.qty>1?'　×'+o.qty:''}</td>
+      <td class="nw">${fm?esc(fm.name):'—'}</td>
+      <td class="nw">${o.orderer}</td>
+      <td style="max-width:320px">${esc(FUDA.summary(o.label))}
+        ${vk==='warn'?`<span class="fv warn" style="margin-left:6px">${esc(vm)}</span>`:''}</td>
+      <td><span class="badge ${({web:'b-primary',call:'b-warning',fax:'b-secondary'})[o.route]||'b-secondary'}">${o.routeLabel}</span></td>
+      <td><span class="badge ${o.status==='done'?'b-success':'b-secondary'}">${o.status==='done'?'出力済':'未出力'}</span></td>
+      <td><span class="note mono">#${String(o.no).padStart(3,'0')}</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="10" style="text-align:center;padding:30px;color:#6b7280">
+      条件に合う注文がありません</td></tr>`;
+  $('cnt').textContent=`${list.length} 件を表示（全 ${DATA.ORDERS.length} 件）`;
+  info();
+}
+function toggle(id,on){ on?sel.add(id):sel.delete(id); info(); }
+function selAll(on){ rows().forEach(o=>on?sel.add(o.id):sel.delete(o.id)); draw(); }
+function info(){
+  const chosen=DATA.ORDERS.filter(o=>sel.has(o.id));
+  const by={};
+  chosen.forEach(o=>{const n=FUDA.FORMATS[o.label.fmt]; if(n) by[n.name]=(by[n.name]||0)+o.qty;});
+  const parts=Object.entries(by).map(([k,v])=>`${k} ${v}枚`);
+  $('selInfo').innerHTML = chosen.length
+    ? `選択 <b>${chosen.length}</b> 件　／　${parts.join('　')}　→　<b>PDF ${parts.length}ファイル</b>`
+    : '行の左のチェックで名札を選んでください。';
+  $('pdfBtn').disabled=!chosen.length;
+}
+
+/* ---------- 右の詳細 ---------- */
+function pick(id){
+  cur=id; const o=DATA.ORDERS.find(x=>x.id===id); if(!o) return;
+  const f=DATA.FUNERALS.find(x=>x.id===o.funeralId), it=DATA.ITEM(o.itemId);
+  const fm=FUDA.FORMATS[o.label.fmt], g=FUDA.geom(o.label), [vk,vm]=FUDA.verdict(g);
+  $('dTitle').innerHTML=`${esc(f.name)}　${esc(it.name)}<br>
+    <span class="mono">${o.id}</span>　${fm.name} ${fm.call}　パターン#${String(o.no).padStart(3,'0')}`;
+  $('dFuda').innerHTML=FUDA.html(o.label, 300, {area:true});
+  $('dMetrics').innerHTML=`<div class="tblwrap" style="min-width:0"><table style="min-width:0">
+    <tr><th>文字サイズ</th><td class="n">${g.Kmain.toFixed(1)} mm（${FUDA.mm2pt(g.Kmain)} pt）</td></tr>
+    <tr><th>字送り</th><td class="n">${g.LH.toFixed(2)} 倍</td></tr>
+    <tr><th>列数・段数</th><td class="n">${g.mc} 列 ／ ${g.nR} 段</td></tr>
+    <tr><th>縦の占有</th><td class="n">${Math.round(g.usedH/g.bodyH*100)} %</td></tr>
+    <tr><th>効いた制約</th><td class="n">${g.bind}</td></tr>
+    <tr><th>判定</th><td class="n"><span class="fv ${vk}">${esc(vm)}</span></td></tr>
+  </table></div>`;
+  $('dPdf').disabled=false;
+  $('dEdit').href='name-tag.html#'+o.id;
+  draw();
+}
+
+/* ---------- PDF ---------- */
+function log(h){ $('pdfLog').innerHTML=h; }
+async function run(items,prefix){
+  $('pdfBtn').disabled=true; $('dPdf').disabled=true;
+  log(`<p class="note" style="margin-top:10px">作成しています…</p>`);
+  try{
+    const made=await FUDAPDF.exportByFormat(items,{prefix,
+      onStep:(i,n,nm)=>log(`<p class="note" style="margin-top:10px">${nm}　${i} / ${n} 枚目を作成中…</p>`)});
+    log(`<div class="banner" style="margin-top:12px;background:#ecfdf5;border-color:#a7f3d0;color:#065f46">
+      <b>${made.length}ファイルを書き出しました。</b><br>`+
+      made.map(m=>`${m.name}　（${m.size}mm × ${m.count}枚）`).join('<br>')+`</div>`);
+  }catch(e){
+    log(`<div class="banner" style="margin-top:12px;background:#fef2f2;border-color:#fecaca;color:#991b1b">
+      書き出せませんでした。${esc(e.message||e)}</div>`);
+  }
+  info(); if(cur) $('dPdf').disabled=false;
+}
+function doPdf(){
+  const items=DATA.ORDERS.filter(o=>sel.has(o.id)).flatMap(o=>{
+    const f=DATA.FUNERALS.find(x=>x.id===o.funeralId);
+    return Array.from({length:o.qty},()=>({label:o.label,title:f.name+'_'+o.id}));
+  });
+  run(items,'名札');
+}
+function doPdfOne(){
+  const o=DATA.ORDERS.find(x=>x.id===cur); if(!o) return;
+  run([{label:o.label,title:o.id}],'名札');
+}
+
+draw();
+</script>
+</body>
+</html>
