@@ -34,6 +34,13 @@ const MEAS={
   lhMax  :2.30,   // 均等割りで字間を伸ばす上限
   lh     :1.25,   // 字送り（固定モードのとき）
   sx     :1.00,   // 字幅  実測 文字の幅/高 中央値 0.974
+  face   :1.00,   /* 字面率。書体を替えたときだけ触ります。
+                     「実際に墨が乗る大きさ ÷ 指定した文字サイズ」です。
+                     この下の余白・ピッチ・文字サイズはすべて
+                     “刷り上がりの大きさ”で測った値なので、
+                     字面の小さい書体に替えると、ここを直すだけで
+                     他の値はそのまま使えます。
+                     合わせ方は README「書体を差し替える」をご覧ください。 */
   vf     :0.34,   // 縦位置  余白全体のうち上に置く割合  実測 0.341
   perRow :4,      // 1段あたりの人数
   mode   :'justify',  // justify＝均等割り ／ fixed＝字送り固定
@@ -133,9 +140,12 @@ function html(f,pxH,opt){
   const cls='fuda'+(o.flat?' flat':'')+(o.print?' print':'');
   if(g.empty) return `<div class="${cls}" style="width:${fm.W*SC}px;height:${pxH}px"></div>`;
   const K=g.K*SC, LH=g.LH, SX=g.SX;
+  /* size は「刷り上がりの大きさ」。字面率で割って CSS の文字サイズにします。
+     行の高さは刷り上がり基準のままにしたいので line-height も割り戻します。 */
+  const FACE=c.face||1;
   const gl=(t,size)=>[...(t||'')].map(ch=>/\s/.test(ch)
     ?`<span class="gl" style="height:${size*0.5*LH}px"></span>`
-    :`<span class="gl" style="font-size:${size}px;line-height:${LH};transform:scaleX(${SX})">${esc(ch)}</span>`).join('');
+    :`<span class="gl" style="font-size:${size/FACE}px;line-height:${LH*FACE};transform:scaleX(${SX})">${esc(ch)}</span>`).join('');
   const spc=v=>v>0?`<span class="gl" style="height:${v}px"></span>`:'';
   const col=x=>{
     const KK=K*(x.k||1);
@@ -181,6 +191,14 @@ function summary(f){
 
 const mm2pt=v=>Math.round(v/0.352778);
 
-global.FUDA={FORMATS,MEAS,geom,html,verdict,summary,specsOf,mm2pt,esc,ulen,clen,
-             version:'2026-10-09 v1'};
+/* いま名札に使われている書体の名前（assets/font.css の指定を読みます） */
+function fontName(){
+  try{
+    const v=getComputedStyle(document.documentElement).getPropertyValue('--fuda-font-name');
+    return (v||'').trim().replace(/^['"]|['"]$/g,'') || '（未設定）';
+  }catch(e){ return '（未設定）'; }
+}
+
+global.FUDA={FORMATS,MEAS,geom,html,verdict,summary,specsOf,mm2pt,esc,ulen,clen,fontName,
+             version:'2026-10-09 v2'};
 })(window);

@@ -1,0 +1,52 @@
+/* ============================================================
+   assets/font.css — 名札の書体（★ここだけを差し替えます）
+   ------------------------------------------------------------
+   名札に刷る文字の書体は、このファイル1枚で決まります。
+   3画面とPDFの書き出しが、すべてここを見ています。
+
+   いま入っているのは「代用の書体」です。モリサワ書体ではありません。
+   モリサワ書体に替えるときは、下の【A】か【B】のどちらかに書き換えて
+   ください。HTML も JavaScript も触りません。
+
+   替えたあとは assets/fuda.js の MEAS.face（字面率）も合わせてください。
+   字面率が違うと、同じ文字サイズでも刷り上がりの大きさが変わります。
+   合わせ方は README の「書体を差し替える」をご覧ください。
+   版数   2026-10-09  v1
+   ============================================================ */
+
+/* ---------- いま入っているもの（代用／Google Fonts・無償） ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap');
+
+:root{
+  --fuda-font: 'Yuji Syuku','Yu Mincho','Hiragino Mincho ProN',serif;
+  --fuda-font-name: '代用書体（Yuji Syuku）';
+}
+
+/* ============================================================
+   【A】フォントファイルをお持ちの場合（サーバーに置いて読み込む）
+
+   ご契約の範囲内で、woff2 に変換したファイルを assets/fonts/ に置き、
+   上の @import と :root を消して、下のコメントを外してください。
+   ※ 配布にあたる置き方になっていないか、ご契約条件をご確認ください。
+     公開リポジトリ（GitHub Pages）にフォントを置くのは避けてください。
+
+@font-face{
+  font-family:'Morisawa Kaisho';
+  src:url('fonts/morisawa-kaisho.woff2') format('woff2');
+  font-weight:normal; font-style:normal; font-display:block;
+}
+:root{
+  --fuda-font: 'Morisawa Kaisho','Yu Mincho',serif;
+  --fuda-font-name: 'モリサワ 〇〇楷書';
+}
+   ------------------------------------------------------------
+   【B】TypeSquare（モリサワのWebフォント）をお使いの場合
+
+   HTML の <head> に TypeSquare の配信タグを入れたうえで、
+   ここは書体名だけを指定します。
+
+:root{
+  --fuda-font: 'A-OTF 正楷書CB1 Pro','Yu Mincho',serif;
+  --fuda-font-name: 'モリサワ 正楷書CB1（TypeSquare）';
+}
+   ============================================================ */

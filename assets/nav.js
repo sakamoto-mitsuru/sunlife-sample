@@ -37,7 +37,8 @@ function render(current){
     <div class="evt">株式会社サン・ライフ</div>
     ${items}
     <div class="foot">静的モック（GitHub Pages）<br>保存はされません<br>
-      名札の組版 ${FUDA.version}<br>画面 2026-10-09 v2</div>
+      名札の組版 ${FUDA.version}<br>画面 2026-10-09 v4<br>
+      書体 ${FUDA.fontName()}　字面率 ${(FUDA.MEAS.face||1).toFixed(3)}</div>
   </aside>`;
 }
 

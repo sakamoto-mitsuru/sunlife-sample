@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>書体の字面率をはかる｜itowa（サン・ライフ様 仕様モック）</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link href="assets/biz.css" rel="stylesheet">
+<link href="assets/font.css" rel="stylesheet">
+<link href="assets/fuda.css" rel="stylesheet">
+<style>
+  .big{font-family:var(--fuda-font);font-size:120px;line-height:1;background:#fff;
+    border:1px solid var(--border);padding:12px 18px;border-radius:3px;display:inline-block}
+  .cmp{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  .out{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+    background:#16202b;color:#d7e3ef;border-radius:3px;padding:14px 16px;overflow:auto;line-height:1.8}
+  canvas{border:1px solid var(--border);background:#fff;border-radius:3px;max-width:100%}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div id="sidebar"></div>
+  <div class="main">
+    <div class="topbar"><span class="title">書体の字面率をはかる</span>
+      <span class="spacer"></span><span class="small muted">サンシーガル厚木本部</span></div>
+    <div class="content">
+      <div class="crumb"><a href="name-tag.html">名札作成</a> ／ 書体の確認</div>
+      <h1 class="page">書体の字面率をはかる</h1>
+
+      <div class="alert alert-info">
+        <b>この画面は何のためのものか</b><br>
+        名札の余白・列ピッチ・文字サイズは、お預かりしたパターン表70種を
+        <b>「紙の上で墨が乗っている大きさ」</b>で実測した値です。
+        書体を替えると、同じ文字サイズを指定しても墨が乗る大きさが変わるため、
+        そのままでは実測値がずれます。<br>
+        この画面で<b>字面率</b>をはかって <code>assets/fuda.js</code> の <code>MEAS.face</code> に入れると、
+        余白・ピッチ・文字サイズの実測値をそのまま使い続けられます。
+        <b>微調整はそのあとに行ってください。</b>
+      </div>
+
+      <div class="card">
+        <div class="card-header">1. いま読み込まれている書体</div>
+        <div class="card-body">
+          <table class="table" style="max-width:720px">
+            <tr><th style="width:220px">書体の名前</th><td id="fname">—</td></tr>
+            <tr><th>CSS の指定</th><td class="mono" id="fcss">—</td></tr>
+            <tr><th>実際に使われた書体</th><td id="freal">—</td></tr>
+            <tr><th>いまの MEAS.face</th><td class="num" id="fnow">—</td></tr>
+          </table>
+          <p class="help">「実際に使われた書体」が指定と違う場合、その書体が端末に入っていないか、
+            読み込みに失敗しています。この状態ではかっても意味がありません。</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">2. はかる</div>
+        <div class="card-body">
+          <div class="fld" style="max-width:520px"><label>はかる文字（名札によく出る字を並べています）</label>
+            <input class="form-control" type="text" id="chars" value="平塚太郎花子厚木相模國髙"></div>
+          <div class="toolbar" style="margin-bottom:14px">
+            <button class="btn btn-primary" onclick="measure()"><i class="fas fa-ruler"></i> はかる</button>
+            <span class="small muted">指定サイズ 400px で描いて、墨の乗った範囲を数えます。</span>
+          </div>
+          <div class="cmp">
+            <div><div class="small muted" style="margin-bottom:5px">見本</div>
+              <div class="big" id="sample">平</div></div>
+            <div><div class="small muted" style="margin-bottom:5px">墨の乗った範囲</div>
+              <canvas id="cv" width="300" height="300"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">3. 結果</div>
+        <div class="card-body">
+          <div id="res"><div class="empty">「はかる」を押してください。</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">4. 書体を替えたあとの手順</div>
+        <div class="card-body">
+          <table class="table">
+            <thead><tr><th style="width:52px">順</th><th>すること</th><th>さわるファイル</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1</td><td>書体を差し替える（フォントファイル、または配信タグ）</td>
+                <td class="mono">assets/font.css</td></tr>
+              <tr><td class="num">2</td><td>この画面で字面率・字幅をはかる</td><td class="mono">font-check.html</td></tr>
+              <tr><td class="num">3</td><td>出た値を <code>MEAS.face</code> と <code>MEAS.sx</code> に入れる</td>
+                <td class="mono">assets/fuda.js</td></tr>
+              <tr><td class="num">4</td><td>70パターンを一覧で見て、収まりの判定を確認する</td>
+                <td class="mono">name-tag.html</td></tr>
+              <tr><td class="num">5</td><td><b>ここから</b>1枚ずつの微調整に入る</td><td class="mono">name-tag.html</td></tr>
+            </tbody>
+          </table>
+          <div class="alert alert-warn" style="margin-bottom:0">
+            <b>順番が大事です。</b>先に微調整をしてから書体を替えると、
+            調整した ±5 の値がすべて別の意味になってしまい、やり直しになります。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/fuda.js"></script>
+<script src="assets/nav.js"></script>
+<script>
+NAV.mount(null);
+const $=id=>document.getElementById(id);
+
+/* いま読み込まれている書体を表示 */
+const css=getComputedStyle(document.documentElement).getPropertyValue('--fuda-font').trim();
+$('fname').textContent=FUDA.fontName();
+$('fcss').textContent=css||'（未設定）';
+$('fnow').textContent=(FUDA.MEAS.face||1).toFixed(3);
+(async()=>{
+  try{ await document.fonts.ready; }catch(e){}
+  const first=(css.split(',')[0]||'').replace(/^['"]|['"]$/g,'').trim();
+  let ok=false;
+  try{ ok=document.fonts.check('16px "'+first+'"'); }catch(e){}
+  $('freal').innerHTML = ok
+    ? `<span class="badge b-success">${FUDA.esc(first)} を使用中</span>`
+    : `<span class="badge b-warning">${FUDA.esc(first)} が見つからないため、次の候補で表示しています</span>`;
+})();
+
+const SIZE=400;   // この大きさで描いて、墨の範囲を測る
+let LAST=null;
+
+/* 基準の書体（いまの実測値を合わせ込んだときの書体）を、この端末に覚えておく */
+function base(){ try{ return JSON.parse(localStorage.getItem('fuda.baseFont')||'null'); }catch(e){ return null; } }
+function setBase(){ if(!LAST) return;
+  try{ localStorage.setItem('fuda.baseFont',JSON.stringify(LAST)); }catch(e){}
+  measure(); }
+function clearBase(){ try{ localStorage.removeItem('fuda.baseFont'); }catch(e){} measure(); }
+
+function inkBox(ch,font){
+  const c=document.createElement('canvas'); c.width=c.height=SIZE*1.6;
+  const x=c.getContext('2d',{willReadFrequently:true});
+  x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+  x.fillStyle='#000'; x.textBaseline='alphabetic'; x.font=font;
+  x.fillText(ch, SIZE*0.3, SIZE*1.15);
+  const d=x.getImageData(0,0,c.width,c.height).data;
+  let x0=1e9,y0=1e9,x1=-1,y1=-1;
+  for(let y=0;y<c.height;y++) for(let X=0;X<c.width;X++){
+    if(d[(y*c.width+X)*4]<128){ if(X<x0)x0=X; if(X>x1)x1=X; if(y<y0)y0=y; if(y>y1)y1=y; }
+  }
+  return x1<0?null:{w:x1-x0+1,h:y1-y0+1,x0,y0,x1,y1};
+}
+
+function measure(){
+  const chars=[...($('chars').value||'平')].filter(c=>!/\s/.test(c));
+  if(!chars.length) return;
+  const font=SIZE+'px '+css;
+  const rows=[];
+  chars.forEach(ch=>{ const b=inkBox(ch,font); if(b) rows.push({ch,face:b.h/SIZE,wide:b.w/b.h,w:b.w/SIZE}); });
+  if(!rows.length){ $('res').innerHTML='<div class="alert alert-danger">はかれませんでした。</div>'; return; }
+
+  /* 字面率は「いちばん大きく出る字」で決めます。組版の収まりはそこで決まるためです。 */
+  const face=Math.max(...rows.map(r=>r.face));
+  const wmax=Math.max(...rows.map(r=>r.w));
+  const sx=+(wmax/face).toFixed(3);
+  LAST={face,sx,name:FUDA.fontName(),chars:$('chars').value};
+
+  /* 見本の描画 */
+  $('sample').textContent=chars[0];
+  const cv=$('cv'), cx=cv.getContext('2d');
+  cx.fillStyle='#fff'; cx.fillRect(0,0,300,300);
+  const s=260, f2=s+'px '+css;
+  cx.fillStyle='#111'; cx.textBaseline='alphabetic'; cx.font=f2;
+  cx.fillText(chars[0], 20, 20+s*0.86);
+  const b=inkBox(chars[0],f2);
+  if(b){ const k=1;
+    cx.strokeStyle='#dc3545'; cx.lineWidth=2; cx.setLineDash([5,4]);
+    /* 同じ条件で測り直して枠を描く */
+    const c2=document.createElement('canvas'); c2.width=c2.height=300;
+    const x2=c2.getContext('2d',{willReadFrequently:true});
+    x2.fillStyle='#fff'; x2.fillRect(0,0,300,300); x2.fillStyle='#000';
+    x2.textBaseline='alphabetic'; x2.font=f2; x2.fillText(chars[0],20,20+s*0.86);
+    const d=x2.getImageData(0,0,300,300).data;
+    let X0=1e9,Y0=1e9,X1=-1,Y1=-1;
+    for(let y=0;y<300;y++) for(let X=0;X<300;X++){
+      if(d[(y*300+X)*4]<128){ if(X<X0)X0=X; if(X>X1)X1=X; if(y<Y0)Y0=y; if(y>Y1)Y1=y; } }
+    if(X1>=0) cx.strokeRect(X0,Y0,X1-X0,Y1-Y0);
+    cx.setLineDash([]); cx.strokeStyle='#adb5bd'; cx.lineWidth=1;
+    cx.strokeRect(20,20+s*0.86-s*0.88,s,s*0.88);
+  }
+
+  const B=base();
+  let advice;
+  if(!B){
+    advice=`<div class="alert alert-warn">
+      <b>まだ「基準」が記録されていません。</b><br>
+      いまの余白・ピッチ・文字サイズは、<b>いまの書体で</b>パターン表70種に合わせ込んだ値です。
+      そのため、新しい書体が「元の書体より何割大きいか」で合わせます。<br>
+      <b>書体を替える前に</b>、この画面をいまの書体で開いて下のボタンを押し、基準を記録してください。</div>
+      <button class="btn btn-primary" onclick="setBase()">
+        <i class="fas fa-bookmark"></i> いまの書体（${FUDA.esc(FUDA.fontName())}）を基準として記録する</button>`;
+  }else if(B.name===FUDA.fontName()){
+    advice=`<div class="alert alert-success">
+      <b>これが基準として記録されている書体です。</b>（字面率 ${B.face.toFixed(3)}／${FUDA.esc(B.name)}）<br>
+      この状態で <code>MEAS.face</code> は <b>1.000</b> のままで正しい値です。
+      書体を <code>assets/font.css</code> で差し替えてから、もう一度この画面を開いてください。</div>
+      <button class="btn btn-outline btn-sm" onclick="clearBase()">基準を記録しなおす</button>`;
+  }else{
+    const ratio=face/B.face, pct=(ratio-1)*100;
+    advice=`<table class="table" style="max-width:760px"><tbody>
+      <tr><th style="width:240px">基準の書体</th><td>${FUDA.esc(B.name)}　<span class="muted">字面率 ${B.face.toFixed(3)}</span></td></tr>
+      <tr><th>いまの書体</th><td>${FUDA.esc(FUDA.fontName())}　<span class="muted">字面率 ${face.toFixed(3)}</span></td></tr>
+      <tr><th>差</th><td class="num">${pct>=0?'+':''}${pct.toFixed(1)} %
+        <span class="muted small">${Math.abs(pct)<1
+          ? 'ほぼ同じです。そのままでも組み方は変わりません。'
+          : '同じ指定でも、墨の乗る大きさが '+(pct>0?'大きく':'小さく')+'なります。'}</span></td></tr>
+    </tbody></table>
+    <p class="small muted" style="margin-top:14px"><b>assets/fuda.js の MEAS を、この2行に書き換えてください。</b></p>
+    <div class="out">  face   :${ratio.toFixed(3)},   // 字面率　${FUDA.esc(FUDA.fontName())} ÷ ${FUDA.esc(B.name)}
+  sx     :${sx.toFixed(3)},   // 字幅　${FUDA.esc(FUDA.fontName())} の実測</div>
+    <p class="help">入れたあと、名札作成の一覧で70パターンの「収まり」を見てください。
+      ここが合っていれば、はみ出しや字間の警告の数は書体を替える前とほとんど変わりません。
+      大きく増えていたら、値の入れ忘れか、別の書体が表示されています。</p>
+    <button class="btn btn-outline btn-sm" onclick="setBase()">この書体を新しい基準にする</button>`;
+  }
+
+  $('res').innerHTML=`
+  <table class="table" style="max-width:760px"><thead><tr>
+    <th style="width:240px">はかった値</th><th class="num" style="width:120px">結果</th><th>意味</th></tr></thead><tbody>
+    <tr><th>字面率（たて）</th><td class="num"><b>${face.toFixed(3)}</b></td>
+      <td class="small">指定した文字サイズのうち、実際に墨が乗るたての割合</td></tr>
+    <tr><th>字幅（よこ／たて）</th><td class="num"><b>${sx.toFixed(3)}</b></td>
+      <td class="small">正方形なら 1.000。細長い書体ほど小さくなります</td></tr>
+  </tbody></table>
+
+  <div style="margin-top:16px">${advice}</div>
+
+  <p class="small muted" style="margin-top:18px">1字ずつの内訳</p>
+  <table class="table" style="max-width:520px"><thead><tr>
+    <th>字</th><th class="num">字面率</th><th class="num">よこ／たて</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td style="font-family:var(--fuda-font);font-size:22px">${FUDA.esc(r.ch)}</td>
+      <td class="num">${r.face.toFixed(3)}</td><td class="num">${r.wide.toFixed(3)}</td></tr>`).join('')}
+  </tbody></table>
+  <p class="help">字面率は<b>いちばん大きい字</b>を採ります。名札の収まりは、
+    その札でいちばん大きく出る字で決まるためです。</p>`;
+}
+measure();
+</script>
+</body>
+</html>

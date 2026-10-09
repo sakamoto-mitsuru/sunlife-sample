@@ -6,6 +6,7 @@
 <title>名札作成｜itowa（サン・ライフ様 仕様モック）</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <link href="assets/biz.css" rel="stylesheet">
+<link href="assets/font.css" rel="stylesheet">
 <link href="assets/fuda.css" rel="stylesheet">
 </head>
 <body>
@@ -27,6 +28,7 @@
 <script src="assets/fuda.js"></script>
 <script src="assets/data.js"></script>
 <script src="assets/nav.js"></script>
+<script src="assets/csv.js"></script>
 <script src="assets/pdf.js"></script>
 <script>
 NAV.mount('nametag');
@@ -114,95 +116,95 @@ const chipRow=(opts,now,fn)=>`<div class="chips">`+opts.map(([v,l])=>
   `<button type="button" class="chip${now===v?' on':''}" onclick="${fn}(${arg(v)})">${esc(l)}</button>`).join('')+`</div>`;
 
 function go(v,o){ if(o)Object.assign(S,o); S.view=v; render(); window.scrollTo(0,0); }
-function render(){ $('#content').innerHTML = S.view==='edit' ? viewEdit() : viewList(); }
+function render(){
+  $('#content').innerHTML = S.view==='import' ? viewImport() : viewMain();
+}
 
 /* ============================================================
-   一覧画面
+   本画面　左に一覧／選んだ名札が右に立ち上がる
    ============================================================ */
-function viewList(){
+function viewMain(){
   const list=rows();
   const nFix=LIST.filter(r=>r.status==='fixed').length;
-  const byFmt={}; LIST.forEach(r=>{const f=FUDA.FORMATS[r.label.fmt]; if(f) byFmt[f.key]=(byFmt[f.key]||0)+1;});
   const ng=LIST.filter(r=>FUDA.verdict(FUDA.geom(r.label))[0]==='warn').length;
 
-  const tr=list.map(r=>{
-    const f=fun(r.funeralId), fm=FUDA.FORMATS[r.label.fmt];
-    const [vk,vm]=FUDA.verdict(FUDA.geom(r.label));
-    const nAdj=ADJF.filter(([k])=>r.label.adj&&r.label.adj[k]).length;
-    return `<tr>
-      <td style="width:32px"><input type="checkbox" ${S.sel.has(r.id)?'checked':''}
-        onchange="toggleSel('${r.id}')"></td>
-      <td class="mono" style="width:68px">${r.no?('#'+String(r.no).padStart(3,'0')):'新規'}</td>
-      <td>${filled(r)?esc(FUDA.summary(r.label)):'<span class="muted">未入力</span>'}
-        ${nAdj?`<span class="badge b-primary" style="margin-left:6px">微調整 ${nAdj}</span>`:''}</td>
-      <td class="nowrap">${f?esc(f.name):'—'}</td>
-      <td class="nowrap">${fm?esc(fm.name):'—'}</td>
-      <td class="nowrap small muted">${esc(DATA.ITEM(r.itemId).name)}${r.qty>1?' ×'+r.qty:''}</td>
-      <td>${r.status==='fixed'?'<span class="badge b-success">確定</span>'
-                              :'<span class="badge b-warning">下書き</span>'}</td>
-      <td><span class="fv ${vk}">${esc(vm)}</span></td>
-      <td class="nowrap">
-        <button class="btn btn-outline btn-sm" onclick="editLabel('${r.id}')">編集</button>
-        <button class="btn btn-outline btn-sm" onclick="dupLabel('${r.id}')">複製</button></td>
-    </tr>`;}).join('');
-
   return `<div class="crumb"><a href="orders.html">注文管理</a> ／ 名札作成</div>
-  <h1 class="page">名札作成</h1>
+  <div class="page-h"><h1>名札作成</h1></div>
+  <p class="page-lead">葬家を選んで、名札を1枚ずつ組みます。札ごとの微調整もここで行います。</p>
 
   <div class="alert alert-info"><b>このモックについて</b>　寸法と組み方は、ヒアリングシートのご回答と
    名札パターン表70種の実測から起こしています。一覧の名札は、そのパターン表70種をそのまま入れたものです。
    保存はされません。</div>
 
-  <div class="tiles">
-    <div class="tile accent"><div class="k">名札 総数</div><div class="v">${LIST.length}<small>枚</small></div></div>
-    <div class="tile"><div class="k">確定済</div><div class="v">${nFix}<small>枚</small></div></div>
-    <div class="tile"><div class="k">下書き</div><div class="v">${LIST.length-nFix}<small>枚</small></div></div>
-    <div class="tile"><div class="k">要確認</div><div class="v">${ng}<small>枚</small></div>
-      <div class="small muted">字間・はみ出しの判定</div></div>
+  <div class="card2">
+    <div class="row">
+      <div style="min-width:190px"><label class="fl">葬家</label>
+        <select class="custom-select" onchange="S.fFun=this.value;render()">${sel(
+          DATA.FUNERALS.map(f=>[f.id,f.name+'（'+f.hall+'）']),S.fFun,'すべての葬家')}</select></div>
+      <div style="min-width:155px"><label class="fl">札の種類</label>
+        <select class="custom-select" onchange="S.fFmt=this.value;render()">${sel(
+          Object.values(FUDA.FORMATS).map(f=>[f.key,f.name+'　'+f.call]),S.fFmt,'すべての札')}</select></div>
+      <div style="min-width:125px"><label class="fl">状態</label>
+        <select class="custom-select" onchange="S.fSt=this.value;render()">${sel(
+          [['fixed','確定'],['draft','下書き']],S.fSt,'すべての状態')}</select></div>
+      <div style="flex:1 1 180px"><label class="fl">名義で探す</label>
+        <input class="form-control" type="text" id="fQ" value="${esc(S.fQ)}" placeholder="平塚、株式会社 など"
+          oninput="S.fQ=this.value;listOnly()"></div>
+      <div><label class="fl">&nbsp;</label>
+        <button class="btn" onclick="addNew()"><i class="fas fa-plus"></i> 個別に作成</button></div>
+      <div><label class="fl">&nbsp;</label>
+        <button class="btn" onclick="go('import',{imStep:1})"><i class="fas fa-file-csv"></i> 一括取り込み</button></div>
+    </div>
+    <div class="row" style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;align-items:center">
+      <button class="btn btn-sm" onclick="selAll(true)">表示中をすべて選択</button>
+      <button class="btn btn-sm" onclick="selAll(false)">選択を解除</button>
+      <span class="small muted" id="selInfo">${selText()}</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" id="pdfBtn" ${S.sel.size?'':'disabled'} onclick="doPdf()">
+        <i class="fas fa-file-pdf"></i> 選択した名札をPDFで出力</button>
+    </div>
+    <p class="help" style="margin-top:8px">PDFは<b>札の種類ごとに分かれて</b>出ます（生花札／芳名札／スロープ・枕札）。
+      ページの大きさは札の実寸です。背景は塗らず、黒のインクだけを載せています。</p>
+    <div id="pdfLog"></div>
   </div>
 
-  <div class="card">
-    <div class="card-header">名札リスト<span class="spacer"></span>
-      <button class="btn btn-primary btn-sm" onclick="addNew()"><i class="fas fa-plus"></i> 個別に作成</button>
-      <button class="btn btn-success btn-sm" id="pdfBtn" ${S.sel.size?'':'disabled'} onclick="doPdf()">
-        <i class="fas fa-file-pdf"></i> 選択したものを出力</button>
+  <div class="grid2 wide">
+    <div>
+      <div class="lst" id="lst">${listRows(list)}</div>
+      <p class="small muted" style="margin-top:10px" id="cnt">${list.length} 件を表示（全 ${LIST.length} 件）
+        　／　確定 ${nFix}　下書き ${LIST.length-nFix}　要確認 ${ng}</p>
     </div>
-    <div class="card-body">
-      <div class="row" style="margin-bottom:12px">
-        <div style="min-width:200px"><label class="fl">葬家</label>
-          <select class="custom-select" onchange="S.fFun=this.value;render()">${sel(
-            DATA.FUNERALS.map(f=>[f.id,f.name+'（'+f.hall+'）']),S.fFun,'すべての葬家')}</select></div>
-        <div style="min-width:160px"><label class="fl">札の種類</label>
-          <select class="custom-select" onchange="S.fFmt=this.value;render()">${sel(
-            Object.values(FUDA.FORMATS).map(f=>[f.key,f.name+'　'+f.call]),S.fFmt,'すべての札')}</select></div>
-        <div style="min-width:130px"><label class="fl">状態</label>
-          <select class="custom-select" onchange="S.fSt=this.value;render()">${sel(
-            [['fixed','確定'],['draft','下書き']],S.fSt,'すべての状態')}</select></div>
-        <div style="flex:1 1 200px"><label class="fl">名義で探す</label>
-          <input class="form-control" type="text" value="${esc(S.fQ)}" placeholder="平塚、株式会社 など"
-            oninput="S.fQ=this.value;listOnly()"></div>
-      </div>
-
-      ${list.length?`<table class="table"><thead><tr>
-        <th style="width:32px"><input type="checkbox" onchange="selAll(this.checked)"></th>
-        <th>No.</th><th>名札の内容</th><th>葬家</th><th>札の種類</th><th>商品</th>
-        <th>状態</th><th>収まり</th><th></th></tr></thead>
-        <tbody>${tr}</tbody></table>`
-       :`<div class="empty">条件に合う名札がありません</div>`}
-
-      <div class="toolbar" style="margin-top:12px">
-        <span class="muted small" id="selInfo">${selText()}</span>
-        <span class="spacer"></span>
-        <button class="btn btn-outline btn-sm" onclick="selAll(true)">表示中をすべて選択</button>
-        <button class="btn btn-outline btn-sm" onclick="selAll(false)">選択を解除</button>
-      </div>
-      <p class="help">PDFは<b>札の種類ごとに分かれて</b>出ます（生花札／芳名札／スロープ・枕札）。
-        ページの大きさは札の実寸です。背景は塗らず、黒のインクだけを載せています。</p>
-      <div id="pdfLog"></div>
-    </div>
-  </div>
-  <p class="small muted">${list.length} 件を表示（全 ${LIST.length} 件）</p>`;
+    <aside id="side">${asideHtml()}</aside>
+  </div>`;
 }
+
+function listRows(list){
+  if(!list.length) return `<div class="empty">条件に合う名札がありません</div>`;
+  return list.map(r=>{
+    const f=fun(r.funeralId), fm=FUDA.FORMATS[r.label.fmt];
+    const [vk,vm]=FUDA.verdict(FUDA.geom(r.label));
+    const nAdj=ADJF.filter(([k])=>r.label.adj&&r.label.adj[k]).length;
+    return `<div class="lrow ${S.editId===r.id?'on':''}" onclick="pick('${r.id}')">
+      <div onclick="event.stopPropagation()"><input type="checkbox" ${S.sel.has(r.id)?'checked':''}
+        onchange="toggleSel('${r.id}')"></div>
+      <div class="no">${r.no?('#'+String(r.no).padStart(3,'0')):'新規'}</div>
+      <div>
+        <div class="nm">${filled(r)?esc(FUDA.summary(r.label)):'<span class="muted">未入力</span>'}</div>
+        <div class="mt">${f?esc(f.name):''}　${fm?esc(fm.name):'—'}　${esc(DATA.ITEM(r.itemId).name)}${
+          r.qty>1?' ×'+r.qty:''}${nAdj?`　<span style="color:var(--primary)">微調整${nAdj}件</span>`:''}</div>
+      </div>
+      <div>${r.status==='fixed'?'<span class="badge b-success">確定</span>'
+                              :'<span class="badge b-warning">下書き</span>'}</div>
+      <div><span class="fv ${vk}">${esc(vm)}</span></div>
+    </div>`;}).join('');
+}
+function drawList(){
+  const e=$('#lst'); if(e) e.innerHTML=listRows(rows());
+  const c=$('#cnt'); if(c){ const n=rows().length, nFix=LIST.filter(r=>r.status==='fixed').length,
+    ng=LIST.filter(r=>FUDA.verdict(FUDA.geom(r.label))[0]==='warn').length;
+    c.textContent=`${n} 件を表示（全 ${LIST.length} 件）　／　確定 ${nFix}　下書き ${LIST.length-nFix}　要確認 ${ng}`; }
+}
+function pick(id){ S.editId=id; drawList(); const a=$('#side'); if(a) a.innerHTML=asideHtml(); }
 function sel(opts,now,all){
   return `<option value="">${all}</option>`+opts.map(([v,l])=>
     `<option value="${esc(v)}" ${now===v?'selected':''}>${esc(l)}</option>`).join('');
@@ -213,19 +215,23 @@ function selText(){
   const p=Object.entries(by).map(([k,v])=>`${k} ${v}枚`);
   return `選択 ${ch.length} 件　／　${p.join('　')}　→　PDF ${p.length}ファイル`;
 }
-function listOnly(){ render(); const e=$('#content input[placeholder^="平塚"]');
-  if(e){e.focus(); e.setSelectionRange(e.value.length,e.value.length);} }
+function listOnly(){ drawList(); }
 function toggleSel(id){ S.sel.has(id)?S.sel.delete(id):S.sel.add(id);
   const i=$('#selInfo'); if(i)i.textContent=selText();
   const b=$('#pdfBtn'); if(b)b.disabled=!S.sel.size; }
-function selAll(on){ rows().forEach(r=>on?S.sel.add(r.id):S.sel.delete(r.id)); render(); }
+function selAll(on){ rows().forEach(r=>on?S.sel.add(r.id):S.sel.delete(r.id));
+  drawList(); const i=$('#selInfo'); if(i)i.textContent=selText();
+  const b=$('#pdfBtn'); if(b)b.disabled=!S.sel.size; }
 
-function editLabel(id){ S.editId=id; go('edit'); }
+/* 一覧と右側だけを描きなおす（ページ全体は作りなおさない） */
+function redraw(){ drawList(); const a=$('#side'); if(a) a.innerHTML=asideHtml(); }
+function editLabel(id){ pick(id); }
 function dupLabel(id){
   const src=LIST.find(r=>r.id===id); seq++;
   const r=Object.assign({},src,{id:'NEW'+seq,no:0,status:'draft',
     label:JSON.parse(JSON.stringify(src.label))});
-  LIST.unshift(r); S.editId=r.id; go('edit');
+  LIST.unshift(r); S.editId=r.id;
+  if(S.view!=='list'){ go('list'); } else { redraw(); scrollSide(); }
 }
 function addNew(){
   seq++;
@@ -234,101 +240,249 @@ function addNew(){
     label:{fmt:S.fFmt||'seika',adj:{},kind:'ind',lead:'',withRel:false,perRow:0,
            names:[{na:'',rel:'',couple:false}],
            corps:[{type:'株式会社',co:'',ti:'代表取締役',na:''}]}};
-  LIST.unshift(r); S.editId=r.id; go('edit');
+  LIST.unshift(r); S.editId=r.id;
+  if(S.view!=='list'){ go('list'); } else { redraw(); scrollSide(); }
+  const e=$('#na0'); if(e) e.focus();
+}
+function scrollSide(){ const a=$('#side'); if(a) a.scrollIntoView({block:'start',behavior:'smooth'}); }
+
+/* ============================================================
+   一括取り込み（札種ごとのCSV）
+   ============================================================ */
+const IM={step:1, fmt:'seika', rows:[], cand:[], pick:0, fileName:''};
+
+function viewImport(){
+  const steps=['テンプレート','読み込み','自動で割り当て','1件ずつ確認','名札リストへ追加'];
+  const head=`<div class="crumb"><a href="orders.html">注文管理</a> ／
+    <a href="#" onclick="go('list');return false">名札作成</a> ／ 一括取り込み</div>
+  <h1 class="page">一括取り込み</h1>
+  <div class="stepper">${steps.map((t,i)=>`<div class="st ${IM.step===i+1?'on':''} ${IM.step>i+1?'done':''}">
+    <span class="n">${IM.step>i+1?'✓':i+1}</span>${t}</div>`).join('')}</div>`;
+
+  if(IM.step===1) return head+`
+  <div class="card"><div class="card-header">1. 札の種類ごとにテンプレートCSVを取る</div>
+    <div class="card-body">
+      <p class="small muted" style="margin-top:0">札の種類ごとに<b>入る名義の数が違う</b>ため、
+        テンプレートも札種ごとに分けています。Excelでそのまま開けるよう、BOM付きのUTF-8で出します。</p>
+      <div class="flist">${Object.values(FUDA.FORMATS).map(F=>`<div class="frowx">
+        <div class="fn mono">名札テンプレート_${esc(F.name)}.csv</div>
+        <span class="badge b-primary">${F.W}×${F.H}mm</span>
+        <span class="small muted nowrap">連名 ${maxNamesOf(F.key)} 名まで</span>
+        <button class="btn btn-outline btn-sm" onclick="dlTemplate('${F.key}')">ダウンロード</button>
+      </div>`).join('')}</div>
+      <div class="alert alert-info" style="margin:14px 0 0">
+        <b>列は1行＝1名義です。</b>同じ「注文番号」の行をまとめて1枚の名札にします。
+        連名12名なら12行です。横に広がらないので、Excelで扱いやすくなります。<br>
+        会社種別・会社名・肩書・氏名を分けて書けない場合は、
+        <b>「名義（自由入力）」の1列だけ</b>でも構いません。読み込むときに自動で分けます。</div>
+    </div>
+    <div class="card-footer"><button class="btn btn-outline" onclick="go('list')">戻る</button>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" onclick="IM.step=2;render()">次へ</button></div></div>`;
+
+  if(IM.step===2) return head+`
+  <div class="card"><div class="card-header">2. 記入済みのCSVを読み込む</div>
+    <div class="card-body">
+      <div class="fld" style="max-width:280px"><label>この取り込みの札の種類</label>
+        <select class="custom-select" onchange="IM.fmt=this.value">${
+          Object.values(FUDA.FORMATS).map(F=>`<option value="${F.key}" ${IM.fmt===F.key?'selected':''}
+            >${esc(F.name)}　${F.call}</option>`).join('')}</select>
+        <div class="help">CSVに「商品」が書いてあれば、そちらが優先されます。</div></div>
+      <div class="drop" id="drop">
+        ここにCSVファイルをドロップ<br><span class="small">または</span><br>
+        <input type="file" accept=".csv,text/csv" id="csvFile" style="display:none" onchange="onFile(this)">
+        <button class="btn btn-primary btn-sm" style="margin-top:8px"
+          onclick="document.getElementById('csvFile').click()">ファイルを選択</button>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="demoCsv()">サンプルで試す</button>
+        <div class="small" style="margin-top:9px">UTF-8・Shift_JIS を自動で見分けます</div>
+      </div>
+      <div id="imErr"></div>
+    </div>
+    <div class="card-footer"><button class="btn btn-outline" onclick="IM.step=1;render()">戻る</button></div></div>`;
+
+  if(IM.step===3){
+    const low=IM.cand.filter(c=>c.conf<0.8||c.warnings.length).length;
+    return head+`
+    <div class="card"><div class="card-header">3. 自動で割り当てた結果
+      <span class="spacer"></span>
+      <span class="small muted">${esc(IM.fileName)}　${IM.cand.length} 枚</span></div>
+      <div class="card-body">
+        <p class="small muted" style="margin-top:0">お客様から受け取るデータは、itowa の様式とは限りません。
+          1つのセルに社名・肩書・氏名が混ざっていても分解し、個人か法人かも見分けます。
+          <b>分け方の規則は、お預かりした名札パターン表70種から起こしています。</b></p>
+        ${low?`<div class="alert alert-warn">${low} 枚は確認をおすすめします。下の一覧で先頭に出しています。</div>`
+             :`<div class="alert alert-success">すべて確度が高く、上限を超えるものもありません。</div>`}
+        <table class="table"><thead><tr>
+          <th>注文番号</th><th>区分</th><th>会社・団体名</th><th>肩書</th><th>名義</th>
+          <th class="num">枚</th><th>確度</th></tr></thead><tbody>
+          ${IM.cand.slice().sort((a,b)=>(a.conf-a.warnings.length)-(b.conf-b.warnings.length))
+            .map(c=>{const L=c.label; return `<tr>
+            <td class="mono nowrap">${esc(c.key)}</td>
+            <td><span class="badge ${L.kind==='corp'?'b-info':'b-secondary'}">${
+              L.kind==='corp'?'法人':'個人'}</span></td>
+            <td class="small">${L.kind==='corp'?esc(L.corps.map(p=>p.co).filter(Boolean).join(' ／ ')||'—'):'—'}</td>
+            <td class="small">${L.kind==='corp'?esc(L.corps.map(p=>p.ti).filter(Boolean).join(' ／ ')||'—'):'—'}</td>
+            <td class="small"><b>${esc(FUDA.summary(L))}</b>
+              ${c.raw.length?`<div class="small muted">元：${esc(c.raw.join(' / '))}</div>`:''}
+              ${c.warnings.map(w=>`<div class="small" style="color:#856404">⚠ ${esc(w)}</div>`).join('')}</td>
+            <td class="num">${c.qty}</td>
+            <td>${c.conf<0.8?'<span class="badge b-warning">要確認</span>'
+                            :'<span class="badge b-success">確度高</span>'}</td></tr>`;}).join('')}
+        </tbody></table>
+      </div>
+      <div class="card-footer"><button class="btn btn-outline" onclick="IM.step=2;render()">戻る</button>
+        <span class="spacer"></span>
+        <button class="btn btn-primary" onclick="IM.step=4;IM.pick=0;render()">1件ずつ確認へ</button></div></div>`;
+  }
+
+  if(IM.step===4){
+    const c=IM.cand[IM.pick]||IM.cand[0];
+    return head+`
+    <div class="alert alert-warn">この状態は<b>下書き</b>です。確定するまで出力の対象になりません。</div>
+    <div class="split"><div class="l">
+      <div class="card"><div class="card-header">4. 1件ずつ見る
+        <span class="spacer"></span><span class="small muted">${IM.cand.length} 枚</span></div>
+        <div class="flist" style="border:none;max-height:560px;overflow:auto">
+          ${IM.cand.map((x,i)=>`<div class="frowx ${i===IM.pick?'on':''}" style="cursor:pointer"
+            onclick="IM.pick=${i};render()">
+            <div class="fn"><b>${esc(FUDA.summary(x.label))}</b>
+              <div class="small muted mono">${esc(x.key)}　${esc(FUDA.FORMATS[x.label.fmt].name)}　${x.qty}枚</div></div>
+            <span class="badge ${x.label.kind==='corp'?'b-info':'b-secondary'}">${
+              x.label.kind==='corp'?'法人':'個人'}</span>
+            ${x.warnings.length?'<span class="badge b-warning">要確認</span>':''}
+            <span class="fv ${FUDA.verdict(FUDA.geom(x.label))[0]}">${
+              esc(FUDA.verdict(FUDA.geom(x.label))[1])}</span>
+          </div>`).join('')}</div>
+        <div class="card-footer"><button class="btn btn-outline" onclick="IM.step=3;render()">戻る</button>
+          <span class="spacer"></span>
+          <button class="btn btn-primary" onclick="IM.step=5;render()">すべて名札リストへ</button></div></div>
+    </div>
+    <div class="r"><div class="card">
+      <div class="card-header">プレビュー<span class="spacer"></span>
+        <span class="small muted">${FUDA.FORMATS[c.label.fmt].call}</span></div>
+      <div class="card-body" style="display:flex;justify-content:center">${FUDA.html(c.label,280,{area:true})}</div>
+      ${c.warnings.length?`<div class="card-body" style="border-top:1px solid var(--border)">
+        ${c.warnings.map(w=>`<div class="small" style="color:#856404">⚠ ${esc(w)}</div>`).join('')}</div>`:''}
+    </div></div></div>`;
+  }
+
+  return head+`
+  <div class="card"><div class="card-header">5. 名札リストへ追加</div>
+    <div class="card-body">
+      <div class="alert alert-info"><b>${IM.cand.length} 枚</b>を下書きとして名札リストに追加します。
+        追加したあと、1枚ずつ開いて確定してください。</div>
+      <table class="table"><thead><tr><th>名札の内容</th><th>札の種類</th>
+        <th class="num">枚</th><th>収まり</th></tr></thead><tbody>
+        ${IM.cand.map(c=>{const [vk,vm]=FUDA.verdict(FUDA.geom(c.label));return `<tr>
+          <td class="small">${esc(FUDA.summary(c.label))}</td>
+          <td class="nowrap">${esc(FUDA.FORMATS[c.label.fmt].name)}</td>
+          <td class="num">${c.qty}</td>
+          <td><span class="fv ${vk}">${esc(vm)}</span></td></tr>`;}).join('')}
+      </tbody></table>
+    </div>
+    <div class="card-footer"><button class="btn btn-outline" onclick="IM.step=4;render()">戻る</button>
+      <span class="spacer"></span>
+      <button class="btn btn-success" onclick="commitImport()">名札リストへ追加する</button></div></div>`;
+}
+
+function maxNamesOf(k){ return k==='seika'?MAX_NAMES:(k==='houmei'?8:6); }
+function dlTemplate(k){
+  FUDACSV.download('名札テンプレート_'+FUDA.FORMATS[k].name+'.csv',
+    FUDACSV.template(k,FUDA.FORMATS,maxNamesOf(k)));
+}
+async function onFile(el){
+  const f=el.files&&el.files[0]; if(!f) return;
+  try{ const t=await FUDACSV.readFile(f); loadCsv(t,f.name); }
+  catch(e){ $('#imErr').innerHTML=`<div class="alert alert-danger" style="margin-top:12px">${esc(e.message||e)}</div>`; }
+}
+function demoCsv(){ loadCsv(FUDACSV.template(IM.fmt,FUDA.FORMATS,maxNamesOf(IM.fmt)),'（サンプル）'); }
+function loadCsv(text,name){
+  try{
+    const rows=FUDACSV.parse(text);
+    IM.cand=FUDACSV.toLabels(rows,{FUNERALS:DATA.FUNERALS,ITEMS:DATA.ITEMS,
+      MAX_NAMES:maxNamesOf(IM.fmt),MAX_CORPS:MAX_CORPS,fmt:IM.fmt});
+    if(!IM.cand.length) throw new Error('読み取れる行がありませんでした。');
+    IM.fileName=name; IM.step=3; render();
+  }catch(e){
+    $('#imErr').innerHTML=`<div class="alert alert-danger" style="margin-top:12px">${esc(e.message||e)}</div>`;
+  }
+}
+function commitImport(){
+  IM.cand.forEach(c=>{ seq++;
+    LIST.unshift({id:'CSV'+seq,no:0,funeralId:c.funeralId,itemId:c.itemId,qty:c.qty,
+      route:'CSV',status:'draft',note:c.note,label:c.label}); });
+  const n=IM.cand.length; IM.cand=[]; IM.step=1;
+  go('list'); flash(n+' 枚を下書きとして追加しました。1枚ずつ開いて確定してください。','alert-success');
 }
 
 /* ============================================================
    名札を入力（1枚ずつ）
    ============================================================ */
-function viewEdit(){
-  const r=rec(); if(!r) return '<div class="empty">名札が選択されていません</div>';
-  const L=r.label, f=fun(r.funeralId), fm=FUDA.FORMATS[L.fmt];
-  const sibs=LIST.filter(x=>x.funeralId===r.funeralId);
-  const gj=gaijiIn(L);
+function asideHtml(){
+  const r=rec();
+  if(!r) return `<div class="card"><div class="card-header">刷り上がり</div>
+    <div class="empty">左の一覧から名札を選んでください。<br>
+      <span class="small">選んだ名札が、ここに立ち上がります。</span></div></div>`;
 
-  return `<div class="crumb"><a href="orders.html">注文管理</a> ／
-    <a href="#" onclick="go('list');return false">名札作成</a> ／ 名札を入力</div>
-  <h1 class="page">名札を入力</h1>
+  const L=r.label, fm=FUDA.FORMATS[L.fmt], gj=gaijiIn(L);
 
-  <div class="split">
-    <div class="l">
-      <div class="card">
-        <div class="card-header">この名札の宛先
-          <span class="spacer"></span>
-          <span class="small muted mono">${esc(r.id)}${r.no?'　パターン#'+String(r.no).padStart(3,'0'):''}</span>
-          <span class="badge ${r.status==='fixed'?'b-success':'b-warning'}">${
-            r.status==='fixed'?'確定':'下書き'}</span></div>
-        <div class="card-body"><div class="row">
-          <div style="flex:1 1 200px"><label class="fl">葬家</label>
-            <select class="custom-select" onchange="setFun(this.value)">${
-              DATA.FUNERALS.map(f=>`<option value="${f.id}" ${r.funeralId===f.id?'selected':''}
-                >${esc(f.name)}（${esc(f.hall)}）</option>`).join('')}</select></div>
-          <div style="flex:1 1 200px"><label class="fl">商品</label>
-            <select class="custom-select" onchange="setItem(this.value)">${
-              DATA.ITEMS.map(it=>`<option value="${it.id}" ${r.itemId===it.id?'selected':''}
-                >${esc(it.name)}</option>`).join('')}</select></div>
-          <div style="width:96px"><label class="fl">枚数</label>
-            <select class="custom-select" onchange="setQty(this.value)">${
-              [1,2,3,4,5].map(q=>`<option value="${q}" ${r.qty===q?'selected':''}>${q} 枚</option>`).join('')}</select></div>
-          <div><label class="fl">受け口</label><div class="badge b-secondary"
-            style="padding:7px 10px">${esc(r.route)}</div></div>
-        </div></div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">${esc(DATA.ITEM(r.itemId).name)}
-          <span class="badge b-primary">${esc(fm.name)}</span>
-          <span class="small muted">${fm.call}／${fm.W}×${fm.H}mm</span>
-          <span class="spacer"></span>
-          <span class="badge ${filled(r)?'b-success':'b-secondary'}" id="lbadge">${
-            filled(r)?'名札 入力済':'名札 未入力'}</span>
-        </div>
-        <div class="card-body">${formHtml(r)}
-          <div class="fld" style="margin-top:12px"><label>備考・メモ（旧漢字・外字・指示など）</label>
-            <textarea class="form-control" rows="2" placeholder="例）「髙」は旧字／「﨑」は立つ崎"
-              oninput="setNote(this.value)">${esc(r.note)}</textarea></div>
-          <div class="pvline">名札プレビュー：<b id="pvtext">${esc(FUDA.summary(L))||'—'}</b></div>
-          ${gj.length?`<div class="alert alert-warn" style="margin:12px 0 0">
-            外字の可能性がある文字が含まれています：<b>${gj.map(esc).join('　')}</b>
-            <div class="small" style="margin-top:4px">MJ番号まで特定しておくと、字形の取り違えを防げます。
-             違う字形が必要な場合は、各入力欄の「字が出ない」から探してください。</div></div>`:''}
-        </div>
-        <div class="card-footer">
-          <button class="btn btn-outline" onclick="go('list')"><i class="fas fa-arrow-left"></i> 名札リストへ戻る</button>
-          <span class="spacer"></span>
-          <button class="btn btn-outline" onclick="saveDraft()">下書き保存</button>
-          <button class="btn btn-primary" id="fixBtn" ${filled(r)?'':'disabled'} onclick="fixLabel()">確定する</button>
-        </div>
-      </div>
-
-      ${sibs.length>1?`<div class="card">
-        <div class="card-header">${f?esc(f.name):''} の名札（${sibs.length}）</div>
-        <div class="flist" style="border:none">${sibs.slice(0,12).map(x=>`<div class="frowx ${x.id===r.id?'on':''}">
-          <div class="fn">${filled(x)?esc(FUDA.summary(x.label)):'<span class="muted">未入力</span>'}</div>
-          <span class="badge ${x.status==='fixed'?'b-success':'b-warning'}">${
-            x.status==='fixed'?'確定':'下書き'}</span>
-          ${x.id===r.id?'<span class="badge b-primary">編集中</span>'
-            :`<button class="btn btn-outline btn-sm" onclick="editLabel('${x.id}')">編集</button>`}
-        </div>`).join('')}</div>
-        ${sibs.length>12?`<div class="card-footer"><span class="small muted">
-          ほか ${sibs.length-12} 枚は名札リストから開いてください。</span></div>`:''}
-      </div>`:''}
+  return `
+  <div class="card">
+    <div class="card-header">刷り上がり<span class="spacer"></span>
+      <span class="badge ${r.status==='fixed'?'b-success':'b-warning'}">${
+        r.status==='fixed'?'確定':'下書き'}</span></div>
+    <div class="card-body" style="padding-bottom:6px">
+      <div class="small muted">${esc(fun(r.funeralId).name)}　${esc(DATA.ITEM(r.itemId).name)}${
+        r.qty>1?'　×'+r.qty:''}</div>
+      <div class="small muted mono">${esc(r.id)}　${esc(fm.name)} ${fm.call}${
+        r.no?'　パターン#'+String(r.no).padStart(3,'0'):''}</div>
     </div>
+    <div class="card-body" style="display:flex;justify-content:center;padding-top:8px" id="fudabox">${
+      FUDA.html(L,300,{area:true})}</div>
+    <div class="card-body" style="border-top:1px solid var(--border)" id="metrics">${metricsHtml(L)}</div>
+  </div>
 
-    <div class="r">
-      <div class="card">
-        <div class="card-header">プレビュー<span class="spacer"></span>
-          <span class="small muted">実寸 ${fm.W}×${fm.H}mm</span></div>
-        <div class="card-body" style="display:flex;justify-content:center" id="fudabox">${
-          FUDA.html(L,300,{area:true})}</div>
-        <div class="card-body" style="border-top:1px solid var(--border);padding-top:11px" id="metrics">${
-          metricsHtml(L)}</div>
-        <div class="card-footer">
-          <button class="btn ${S.tune?'btn-primary':'btn-outline-primary'}" style="width:100%"
-            onclick="S.tune=!S.tune;render()">微調整 ${S.tune?'を閉じる':'を開く'}</button></div>
+  <div class="card">
+    <div class="card-header">名札の内容<span class="spacer"></span>
+      <span class="badge ${filled(r)?'b-success':'b-secondary'}" id="lbadge">${
+        filled(r)?'入力済':'未入力'}</span></div>
+    <div class="card-body">
+      <div class="row" style="margin-bottom:10px">
+        <div style="flex:1 1 150px"><label class="fl">葬家</label>
+          <select class="custom-select" onchange="setFun(this.value)">${
+            DATA.FUNERALS.map(f=>`<option value="${f.id}" ${r.funeralId===f.id?'selected':''}
+              >${esc(f.name)}</option>`).join('')}</select></div>
+        <div style="flex:1 1 150px"><label class="fl">商品</label>
+          <select class="custom-select" onchange="setItem(this.value)">${
+            DATA.ITEMS.map(it=>`<option value="${it.id}" ${r.itemId===it.id?'selected':''}
+              >${esc(it.name)}</option>`).join('')}</select></div>
+        <div style="width:84px"><label class="fl">枚数</label>
+          <select class="custom-select" onchange="setQty(this.value)">${
+            [1,2,3,4,5].map(q=>`<option value="${q}" ${r.qty===q?'selected':''}>${q} 枚</option>`).join('')}</select></div>
       </div>
-      ${S.tune?tunePanel(L):''}
+      ${formHtml(r)}
+      <div class="fld" style="margin-top:12px"><label>備考・メモ（旧漢字・外字・指示など）</label>
+        <textarea class="form-control" rows="2" placeholder="例）「髙」は旧字／「﨑」は立つ崎"
+          oninput="setNote(this.value)">${esc(r.note)}</textarea></div>
+      <div class="pvline">名札プレビュー：<b id="pvtext">${esc(FUDA.summary(L))||'—'}</b></div>
+      ${gj.length?`<div class="alert alert-warn" style="margin:12px 0 0">
+        外字の可能性がある文字が含まれています：<b>${gj.map(esc).join('　')}</b>
+        <div class="small" style="margin-top:4px">MJ番号まで特定しておくと、字形の取り違えを防げます。
+         違う字形が必要な場合は、各入力欄の「字が出ない」から探してください。</div></div>`:''}
     </div>
+    <div class="card-footer">
+      <button class="btn btn-sm" onclick="dupLabel('${r.id}')">複製</button>
+      <span class="spacer"></span>
+      <button class="btn btn-sm" onclick="saveDraft()">下書き保存</button>
+      <button class="btn btn-primary btn-sm" id="fixBtn" ${filled(r)?'':'disabled'}
+        onclick="fixLabel()">確定する</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">この1枚の微調整<span class="spacer"></span>
+      <button class="btn btn-sm" onclick="resetAdj()">0に戻す</button></div>
+    <div class="card-body" style="padding-top:11px">${tuneBody(L)}</div>
   </div>`;
 }
 
@@ -440,35 +594,29 @@ function metricsHtml(L){
   </table>`;
 }
 
-/* ---------- 微調整パネル ---------- */
-function tunePanel(L){
+/* ---------- 微調整 ---------- */
+function tuneBody(L){
   const sp=FUDA.specsOf(L,FUDA.MEAS), kinds=new Set(sp.map(x=>x.t)), mm=fieldMM(L);
   const hasRel=L.withRel&&sp.some(x=>x.t==='name');
   const alone=kinds.size<=1;
-  if(!kinds.size) return `<div class="tune"><div class="tb">
-    <span class="muted small">名義を入れると、調整できる項目が出ます。</span></div></div>`;
-  return `<div class="tune">
-    <div class="th">微調整<span class="spacer"></span>
-      <button class="btn btn-outline btn-sm" onclick="resetAdj()">0に戻す</button></div>
-    <div class="tb">
-      <p class="small muted" style="margin-top:0">フィールドごとに ±5 段階、1段階が5%です。
-        <b>相対比率</b>方式のため、上げた行は必ず相対的に大きくなり、そのぶん他の行が小さくなります。
-        全体はつねに印字領域に収まります。</p>
-      ${ADJF.map(([k,lab,kk])=>{
-        const v=(L.adj&&L.adj[k])||0;
-        const present = k==='rel'?hasRel:kinds.has(ADJ_T[k]);
-        const dead = !present || (alone && k!=='rel');
-        return `<div class="slrow ${dead?'dead':''}">
-          <div class="slh"><span class="kk">${kk}</span><span class="lab">${lab}</span>
-            <span class="mm" data-mm="${k}">${(mm[k]||0).toFixed(1)}mm</span>
-            <span class="val ${v===0?'z':''}" data-v="${k}">${v>0?'+':''}${v}</span></div>
-          <input type="range" min="-5" max="5" step="1" value="${v}" ${dead?'disabled':''}
-            oninput="setAdj('${k}',this.value)"></div>`;}).join('')}
-      ${alone?`<p class="small" style="color:#856404">この札は列が全部おなじ種類なので、
-        個々の大きさを動かしても結果は変わりません。</p>`:''}
-      <div class="help">微調整は名札1枚ごとに保存されます。この画面でのみ調整でき、
-        注文管理やお客様の画面には出ません。</div>
-    </div></div>`;
+  if(!kinds.size) return `<span class="muted small">名義を入れると、調整できる項目が出ます。</span>`;
+  return `<p class="small muted" style="margin-top:0">フィールドごとに ±5 段階、1段階が5%です。
+      <b>相対比率</b>方式のため、上げた行は必ず相対的に大きくなり、そのぶん他の行が小さくなります。
+      全体はつねに印字領域に収まります。</p>
+    ${ADJF.map(([k,lab,kk])=>{
+      const v=(L.adj&&L.adj[k])||0;
+      const present = k==='rel'?hasRel:kinds.has(ADJ_T[k]);
+      const dead = !present || (alone && k!=='rel');
+      return `<div class="slrow ${dead?'dead':''}">
+        <div class="slh"><span class="kk">${kk}</span><span class="lab">${lab}</span>
+          <span class="mm" data-mm="${k}">${(mm[k]||0).toFixed(1)}mm</span>
+          <span class="val ${v===0?'z':''}" data-v="${k}">${v>0?'+':''}${v}</span></div>
+        <input type="range" min="-5" max="5" step="1" value="${v}" ${dead?'disabled':''}
+          oninput="setAdj('${k}',this.value)"></div>`;}).join('')}
+    ${alone?`<p class="small" style="color:#856404">この札は列が全部おなじ種類なので、
+      個々の大きさを動かしても結果は変わりません。</p>`:''}
+    <div class="help">微調整は名札1枚ごとに保存されます。この画面でのみ調整でき、
+      注文管理やお客様の画面には出ません。</div>`;
 }
 
 /* ============================================================
@@ -488,28 +636,28 @@ function refresh(){                     /* 入力中は組み直さず、表示�
 }
 function touch(){ const r=rec(); if(r&&r.status==='fixed') r.status='draft'; }
 
-function setFun(v){ rec().funeralId=v; touch(); render(); }
+function setFun(v){ rec().funeralId=v; touch(); redraw(); }
 function setItem(v){ const r=rec(); r.itemId=v;
-  const it=DATA.ITEM(v); if(it&&it.fmt) r.label.fmt=it.fmt; touch(); render(); }
-function setQty(v){ rec().qty=+v; touch(); render(); }
-function setFmt(v){ rec().label.fmt=v; touch(); render(); }
-function setKind(v){ const L=rec().label; L.kind=v; L.adj={}; touch(); render(); }
-function setLead(v){ rec().label.lead=v; touch(); render(); }
-function setRel(v){ const L=rec().label; L.withRel=v; L.adj={}; touch(); render(); }
-function setPer(v){ rec().label.perRow=v; touch(); render(); }
-function setQuick(i,v){ rec().label.names[i].na=v; touch(); render(); }
+  const it=DATA.ITEM(v); if(it&&it.fmt) r.label.fmt=it.fmt; touch(); redraw(); }
+function setQty(v){ rec().qty=+v; touch(); redraw(); }
+function setFmt(v){ rec().label.fmt=v; touch(); redraw(); }
+function setKind(v){ const L=rec().label; L.kind=v; L.adj={}; touch(); redraw(); }
+function setLead(v){ rec().label.lead=v; touch(); redraw(); }
+function setRel(v){ const L=rec().label; L.withRel=v; L.adj={}; touch(); redraw(); }
+function setPer(v){ rec().label.perRow=v; touch(); redraw(); }
+function setQuick(i,v){ rec().label.names[i].na=v; touch(); redraw(); }
 function setCouple(i,v){ const n=rec().label.names[i]; n.couple=v;
-  if(v) n.na=(n.na||'').replace(/\s+/g,''); touch(); render(); }
+  if(v) n.na=(n.na||'').replace(/\s+/g,''); touch(); redraw(); }
 function setN(i,k,v){ rec().label.names[i][k]=v; touch(); refresh(); }
 function setC(i,k,v,re){ rec().label.corps[i][k]=v; touch(); re?render():refresh(); }
 function setNote(v){ rec().note=v; }
 function addN(){ const L=rec().label; if(L.names.length>=MAX_NAMES) return;
-  L.names.push({na:'',rel:'',couple:false}); touch(); render();
+  L.names.push({na:'',rel:'',couple:false}); touch(); redraw();
   const e=$('#na'+(L.names.length-1)); if(e) e.focus(); }
-function rmN(){ const L=rec().label; if(L.names.length>1){L.names.pop(); L.adj={}; touch(); render();} }
+function rmN(){ const L=rec().label; if(L.names.length>1){L.names.pop(); L.adj={}; touch(); redraw();} }
 function addC(){ const L=rec().label; if(L.corps.length>=MAX_CORPS) return;
-  L.corps.push({type:'株式会社',co:'',ti:'',na:''}); touch(); render(); }
-function rmC(){ const L=rec().label; if(L.corps.length>1){L.corps.pop(); L.adj={}; touch(); render();} }
+  L.corps.push({type:'株式会社',co:'',ti:'',na:''}); touch(); redraw(); }
+function rmC(){ const L=rec().label; if(L.corps.length>1){L.corps.pop(); L.adj={}; touch(); redraw();} }
 function setAdj(k,v){
   const L=rec().label; L.adj=L.adj||{}; L.adj[k]=+v; touch();
   const box=$('#fudabox'); if(box) box.innerHTML=FUDA.html(L,300,{area:true});
@@ -520,11 +668,11 @@ function setAdj(k,v){
   const el=document.querySelector(`[data-v="${k}"]`);
   if(el){ el.textContent=(+v>0?'+':'')+v; el.className='val'+(+v===0?' z':''); }
 }
-function resetAdj(){ rec().label.adj={}; touch(); render(); }
-function saveDraft(){ const r=rec(); r.status='draft';
+function resetAdj(){ rec().label.adj={}; touch(); redraw(); }
+function saveDraft(){ const r=rec(); r.status='draft'; drawList();
   flash('下書きとして保存しました。（モックなので画面を閉じると消えます）','alert-info'); }
 function fixLabel(){ const r=rec(); r.status='fixed';
-  flash('確定しました。出力の対象になります。','alert-success'); render(); }
+  flash('確定しました。出力の対象になります。','alert-success'); redraw(); }
 function flash(msg,cls){
   const b=document.createElement('div'); b.className='alert '+cls;
   b.style.cssText='position:fixed;right:22px;bottom:22px;z-index:70;box-shadow:0 4px 16px rgba(0,0,0,.18)';
@@ -562,7 +710,7 @@ function pickGaiji(ch){
   const L=rec().label;
   if(GT.scope==='n') L.names[GT.idx][GT.field]=(L.names[GT.idx][GT.field]||'')+ch;
   else               L.corps[GT.idx][GT.field]=(L.corps[GT.idx][GT.field]||'')+ch;
-  closeGaiji(); touch(); render();
+  closeGaiji(); touch(); redraw();
 }
 
 /* ============================================================
@@ -591,8 +739,9 @@ async function doPdf(){
 
 /* 注文管理から #注文番号 で飛んできたとき */
 const h0=decodeURIComponent(location.hash.replace(/^#/,''));
-if(h0 && LIST.some(r=>r.id===h0)){ S.editId=h0; S.view='edit'; }
+if(h0 && LIST.some(r=>r.id===h0)) S.editId=h0;
 render();
+if(S.editId){ const el=document.querySelector('.lrow.on'); if(el) el.scrollIntoView({block:'center'}); }
 </script>
 </body>
 </html>

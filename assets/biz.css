@@ -155,11 +155,41 @@ td.nw,th.nw,.nowrap{white-space:nowrap}
 .frowx .fn{flex:1 1 auto;min-width:0}
 .empty{padding:44px 20px;text-align:center;color:var(--muted);font-size:13.5px}
 
+/* ---------- 手順（ステッパー）・ファイル投入 ---------- */
+.stepper{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap}
+.stepper .st{flex:1 1 130px;padding:8px 10px;background:#fff;border:1px solid var(--border);
+  border-radius:3px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.stepper .st .n{width:20px;height:20px;border-radius:50%;background:#e9ecef;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex:0 0 auto}
+.stepper .st.on{border-color:var(--primary);color:var(--text);font-weight:600}
+.stepper .st.on .n{background:var(--primary);color:#fff}
+.stepper .st.done .n{background:var(--success);color:#fff}
+.drop{border:2px dashed #ced4da;border-radius:4px;padding:30px 20px;text-align:center;
+  background:#fafbfc;color:var(--muted);font-size:13.5px}
+.drop.over{border-color:var(--primary);background:#f0f7ff}
+
 /* ---------- 2段組 ---------- */
 .split{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
 .split .l{flex:1 1 420px;min-width:320px}
 .split .r{flex:0 0 320px;position:sticky;top:76px}
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+.grid2.wide{grid-template-columns:minmax(0,1fr) 400px}
+/* 左の一覧と右の名札は、それぞれ別にスクロールします */
+.grid2>aside{position:sticky;top:76px;max-height:calc(100vh - 96px);
+  overflow-y:auto;padding-right:2px}
+.grid2>aside .card:last-child{margin-bottom:0}
+
+/* 一覧の行（選ぶと右に立ち上がる方式） */
+.lst{border:1px solid var(--border);border-radius:3px;background:#fff;
+  max-height:calc(100vh - 140px);overflow-y:auto}
+.lrow{display:grid;grid-template-columns:26px 50px minmax(0,1fr) auto auto;gap:10px;
+  align-items:center;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer}
+.lrow:last-child{border-bottom:none}
+.lrow:hover{background:#f8fbff}
+.lrow.on{background:#f0f7ff;box-shadow:inset 3px 0 0 var(--primary)}
+.lrow .no{font-size:11.5px;color:var(--muted);font-family:ui-monospace,monospace;text-align:right}
+.lrow .nm{font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}
+.lrow .mt{font-size:11.5px;color:var(--muted)}
 
 /* ---------- 微調整パネル ---------- */
 .tune{border:1px solid var(--border);border-radius:3px;background:#fff;margin-top:12px}
@@ -195,8 +225,12 @@ td.nw,th.nw,.nowrap{white-space:nowrap}
 .gcand .gph{font-size:11px;color:var(--muted);width:46px;text-align:center;
   border:1px dashed var(--border);border-radius:3px;padding:6px 0}
 
+@media(max-width:1100px){
+  .grid2,.grid2.wide{grid-template-columns:minmax(0,1fr)}
+  .grid2>aside{position:static}
+  .lst{max-height:none}
+}
 @media(max-width:1000px){
-  .grid2{grid-template-columns:minmax(0,1fr)}
   .split .r{position:static;flex:1 1 300px}
   .shell{display:block}
   .sidebar{width:100%;flex-direction:row;overflow-x:auto;align-items:center}
