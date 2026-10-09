@@ -1,0 +1,67 @@
+/* ============================================================
+   assets/app.css — お客様が入力するフォーム（追悼ページ側）
+   既存の memorial モックの配色・組みに合わせています。
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@500;700&display=swap');
+:root{--bg:#f5f0e8;--paper:#fff;--ink:#3a3228;--muted:#9a8f7e;--line:#eee;
+  --primary:#635e7a;--gold:#b0925a;--soft:#f5f0e8;--green:#2a6040}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:"Noto Sans JP",sans-serif;color:var(--ink);font-size:14px}
+.app{max-width:940px;margin:0 auto;background:var(--bg);min-height:100vh;
+  box-shadow:0 0 40px rgba(0,0,0,.06);display:flex;flex-direction:column}
+.mser{font-family:"Shippori Mincho",serif}
+.mhead{background:#fff;height:56px;padding:0 16px;position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.mhead .nm{font-family:"Shippori Mincho",serif;font-size:15px}
+.mhead .lk{font-size:12px;color:var(--muted);text-decoration:none}
+.stepper{display:flex;background:#fff;border-bottom:1px solid var(--line)}
+.st{flex:1;text-align:center;font-size:11.5px;color:var(--muted);padding:9px 2px 10px}
+.st .n{width:22px;height:22px;border-radius:50%;background:#e8e2d6;color:#8b8071;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:12px;font-weight:700}
+.st.on{color:var(--ink);font-weight:600}
+.st.on .n{background:var(--primary);color:#fff}
+.content{padding:16px;flex:1}
+.sec-lead{font-size:17px;margin:4px 0 12px;letter-spacing:.03em}
+.card{background:var(--paper);border-radius:12px;padding:15px 16px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.hint{font-size:12px;color:var(--muted);line-height:1.75}
+.toggle{display:flex;gap:6px}
+.toggle button{flex:1;border:1px solid #ddd6c8;background:#fff;color:var(--ink);
+  border-radius:9px;padding:9px 6px;font-size:13.5px;font-family:inherit;cursor:pointer}
+.toggle button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.fld{margin-bottom:11px}
+.fld label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.req{color:#b91c1c}
+input[type=text],textarea,select{width:100%;border:1px solid #d6d0c4;border-radius:9px;
+  padding:10px 12px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink)}
+input[type=text]:focus,textarea:focus,select:focus{outline:2px solid var(--primary);outline-offset:-1px}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.quick button{border:1px solid #e3ddd0;background:#fbf9f5;border-radius:999px;
+  padding:5px 11px;font-size:12px;cursor:pointer;color:#6b5e50;font-family:inherit}
+.quick button:hover{border-color:var(--gold);color:var(--gold)}
+.prod{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.pcard{background:#fff;border:1px solid #eee;border-radius:12px;padding:12px 13px;cursor:pointer}
+.pcard:hover{border-color:var(--gold)}
+.pcard.on{border-color:var(--primary);box-shadow:0 0 0 2px rgba(99,94,122,.18)}
+.pcard .nm{font-size:13.5px;font-weight:600;line-height:1.45}
+.pcard .mt{font-size:11.5px;color:var(--muted);margin-top:3px}
+.pcard .pr{font-size:14px;margin-top:6px}
+.lbl2{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:620px){.lbl2{grid-template-columns:minmax(0,1fr)}
+  .lbl2 .pv{display:flex;justify-content:center}}
+.pv .cap{font-size:10.5px;color:var(--muted);text-align:center;margin-bottom:5px}
+.rowx{display:grid;grid-template-columns:24px minmax(0,1fr) 96px 30px;gap:7px;
+  align-items:center;margin-bottom:7px}
+.rowx .ix{font-size:11px;color:var(--muted);text-align:right}
+.mini{width:30px;height:30px;border:1px solid #ddd6c8;background:#fff;color:#8b8071;
+  border-radius:8px;font-size:16px;line-height:1;cursor:pointer;font-family:inherit}
+.mini:hover{border-color:#b91c1c;color:#b91c1c}
+.badge{font-size:11px;padding:2px 8px;border-radius:999px;margin-left:auto}
+.botbar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);
+  padding:11px 16px;display:flex;gap:10px;align-items:center}
+.btn{font-family:inherit;font-size:14px;border:1px solid #ddd6c8;background:#fff;
+  color:var(--ink);border-radius:10px;padding:11px 18px;cursor:pointer}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.note-s{font-size:11.5px;color:var(--muted);line-height:1.7;background:#fbf9f5;
+  border:1px solid #efe9dc;border-radius:9px;padding:9px 11px;margin-top:10px}
